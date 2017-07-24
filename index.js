@@ -7,37 +7,61 @@ const def = $.create( { checkTypes: true, env } )
 
 const log = R.tap( console.log )
 
-const isType =
-  x =>
-    $.Type.validate( x ).isRight === true
-
 const isOfTypeOrEqual =
-    x => t =>
-      ( isType( t ) && t.validate( x ).isRight === true )
+    t => x =>
+      ( $.test( [], $.Type, t ) && $.test( [], t, x ) === true )
       || ( R.is( Function, t ) && t( x ) === true )
       || t === x
 
 const _SumType =
   ( name, url, cases, sharedFns ) =>
-    { const isConstructed =
-        x =>
-          x[ '@@type' ] === name
+    {
 
-      const typePredicate =
+      const hasMatchingCase =
         x =>
-          isConstructed( x )
-          || R.reduce( ( _, kase ) =>
-                         isOfTypeOrEqual( x )( kase.type ) === true
-                           ? R.reduced( true )
-                           : false
-                     , false
-                     , cases
-                     )
+          R.reduce( ( _, { type } ) =>
+                      isOfTypeOrEqual( type )( x ) === true
+                        ? R.reduced( true )
+                        : false
+                 , false
+                 , cases
+                 )
+
+      const isConstructed =
+        S.allPass( [ //log,
+                     S.pipe( [ //log,
+                               S.get( S.equals( name ), '@@type' )
+                             , log
+                             , S.isJust
+                             ]
+                           )
+                   , S.pipe( [ //log,
+                               S.get( hasMatchingCase, 'value' )
+                             , S.isJust
+                             ]
+                           )
+                   ]
+                 )
+
+      const isConstructedNew =
+        S.pipe( [ //log,
+                  S.toMaybe
+                , S.filterM( S.allPass( [ S.get( S.equals( name ), '@@type' )
+                                        , S.get( hasMatchingCase, 'value' )
+                                        ]
+                                      )
+                           )
+                , log
+                ]
+              )
 
       const _type =
         $.NullaryType( name
                      , url
-                     , typePredicate
+                     , S.anyPass( [ isConstructed
+                                  , hasMatchingCase
+                                  ]
+                                )
                      )
 
       const getValue =
@@ -54,7 +78,11 @@ const _SumType =
                 ( cases )
 
       const _allFnNames =
-        R.pipe( R.keys
+        R.pipe( R.reduce( ( acc, { tag, fns } ) =>
+                    R.assoc( tag, fns, acc )
+                , {}
+                )
+              , R.keys
               , R.reduce( ( acc, x ) =>
                             R.concat( R.keys( _allCasesFnsOrig[ x ] )
                                     , acc
@@ -64,17 +92,20 @@ const _SumType =
               , R.concat( R.keys( sharedFns ) )
               , R.uniq
               )
-              ( _allCasesFnsOrig )
+              ( cases )
 
       const _assignFn =
         fnName =>
-          R.reduce( ( acc, kase ) =>
+          R.reduce( ( acc, { tag, fns } ) =>
                       R.ifElse( R.is( Function )
-                              , x => R.assocPath( [ kase.tag, fnName ], x, acc )
+                              , x =>
+                                  R.assocPath( [ tag, fnName ], x, acc )
                               , _ =>
-                                  { throw new TypeError( `No '${ fnName }' function defined on case '${ kase.tag }' or default.` ) }
+                                  { throw new TypeError( `No '${ fnName }' function defined on case '${ tag }' or default.` ) }
                               )
-                              ( kase.fns[ fnName ] || sharedFns[ fnName ].defaultFn )
+                              ( fns[ fnName ]
+                                || sharedFns[ fnName ].defaultFn
+                              )
                   , {}
                   )
                   ( cases )
@@ -92,32 +123,32 @@ const _SumType =
               R.pathOr( R.identity, [ fnName, 'sig' ], sharedFns )( _type )
             if ( !$.test( [], $.Array( $.Type ), sig ) )
               { throw new TypeError( `Missing or invalid signature for function '${ fnName }' on '${ name }'.` ) }
-            // This gets us the index of the last __input__ of our type. We use this to determine
-            // whether or not to return a constructed value if the return value is of our type.
+            // Get the index toName the last __input__ toName our _type. This is used to determine
+            // whether or not to return a constructed value when the return value is toName our _type.
             const typeArgIndex =
               R.findLastIndex( R.equals( _type ), R.init( sig ) )
-            // If we return a value of our type and the last __input__ of our type is constructed,
+            // If we return a value toName our _type and the last __input__ toName our _type is constructed,
             // we return a constructed value, otherwise a bare value.
-            const returnsOurType = R.equals( _type, R.last( sig ) )
-            const fnLength = sig.length - 1
+            const returnsOurType =
+              R.equals( _type, R.last( sig ) )
             return (
               ( ...args ) =>
                 { const typeArg = R.prop( typeArgIndex, args )
                   const typeArgIsConstructed = isConstructed( typeArg )
-                  const tag = R.prop( 'tag', _of( typeArg ) )
+                  const tag = R.prop( 'tag', _toName( typeArg ) )
                   const fn =
                     def( fnName, {}, sig, _allCasesFns[ tag ][ fnName ] )
                   const prepArgs =
                     arg =>
                       R.equals( tag, arg.tag )
-                        ? getValue( arg )
+                        ? arg.value
                         : arg
-                  const almostThere = fn( ...R.map( prepArgs, args ) )
+                  const bare = fn( ...R.map( prepArgs, args ) )
                   return (
                     typeArgIsConstructed
                     && returnsOurType
-                      ? _of( almostThere )
-                      : almostThere
+                      ? _toName( bare )
+                      : bare
                   )
                 }
             )
@@ -132,28 +163,29 @@ const _SumType =
       const _sharedFns =
         _allFnNames.map( _makeSharedFns )
 
-      const _makeMethods =
+      const staticToInstance =
+        x => ( [ name, fn ] ) =>
+          [ name
+          , ( ...z ) =>
+              fn( ...R.append( _toName( x ), z ) )
+          ]
+
+      const _makeInstanceMethods =
         x =>
           R.pipe( //log,
-                    R.map( y =>
-                             [ y[ 0 ]
-                             , ( ...z ) =>
-                                 y[ 1 ]( ...R.append( _of( x ), z ) )
-                             ]
-                         )
-                  , R.fromPairs
-                  )( _sharedFns )
+                  R.map( staticToInstance( x ) )
+                , R.fromPairs
+                )
+                ( _sharedFns )
 
-      //log( _sharedFns )
-
-      // returns all tags that an input value 'has' (could have)
+      // returns all tags that an input value 'has' (or could have)
       const allTags =
         x =>
           R.is( Array, x.allTags )
           ? x.allTags
           : R.reduce(
               ( acc, kase ) =>
-                isOfTypeOrEqual( getValue( x ) )( kase.type ) === true
+                isOfTypeOrEqual( kase.type )( getValue( x ) ) === true
                   ? R.append( kase.tag, acc )
                   : acc
               , []
@@ -165,30 +197,35 @@ const _SumType =
            , {}
            , [ $.Object, _type, _type ]
            , ( kase, x ) =>
-               (
-                 { ..._makeMethods( x )
-                 , name
-                 , url
-                 , value: getValue( x )
-                 , [ 'is' + kase.tag ]: true
-                 , tag: kase.tag
-                 , allTags: allTags( x )
-                 , '@@type': name
-                 }
-               )
+               { const r =
+                   { ..._makeInstanceMethods( x )
+                   , name
+                   , url
+                   , value: R.clone( x )
+                   , [ 'is' + kase.tag ]: true
+                   , tag: kase.tag
+                   , allTags: allTags( x )
+                   , '@@type': name
+                   }
+                 r.constructor = name
+                 return r
+               }
            )
 
-      const _of =
+      const _toName =
         x =>
           R.reduce( ( _, kase ) =>
-                      isOfTypeOrEqual( getValue( x ) )( kase.type ) === true
-                        ? R.reduced( _tagIt( kase )( x ) )
-                        : false
+                      { const value = getValue( x )
+                        return(
+                          isOfTypeOrEqual( kase.type )( value ) === true
+                            ? R.reduced( _tagIt( kase )( value ) )
+                            : false
+                        )
+                      }
                   , false
                   , cases
                   )
-      const of =
-        def( 'of', {}, [ $.Any, _type ], _of )
+      const toName = def( 'toName', {}, [ $.Any, _type ], _toName )
 
       const allCaseTags =
         R.pluck( 'tag', cases )
@@ -221,7 +258,7 @@ const _SumType =
               ]
             : [ kase.tag
               , x =>
-                  isOfTypeOrEqual( x )( kase.type )
+                  isOfTypeOrEqual( kase.type )( x )
                   ? _tagIt( kase )( x )
                   : log( S.Left( 'invalid value - need to fix this in _makeCaseConstructors' ) )
               ]
@@ -235,9 +272,9 @@ const _SumType =
                          )
           ]
 
-      return (
-        { [ name ]: _type // 'this type matches constructed and inferred values'
-        , [ 'to' + name ]: of
+      const r =
+        { [ name ]: _type // 'matches constructed and bare values'
+        , [ 'to' + name ]: toName
         , isConstructed
         , getValue
         , allTags
@@ -247,10 +284,12 @@ const _SumType =
         , ...R.fromPairs( cases.map( _makeCaseTypes ) )
         , ...R.fromPairs( _sharedFns )
         }
-      )
+      r.constructor = 'SumType'
+
+      return r
     }
 
-export const SumType =
+const SumType =
   def( 'SumType'
      , {}
      , [ $.String, $.String, $.Array( $.Object ), $.Nullable( $.Object ), $.Object ]
@@ -258,7 +297,7 @@ export const SumType =
      )
 
 //region Tuple and UntaggedSumType
-export const UntaggedSumType =
+const UntaggedSumType =
   ( name, url, cases ) =>
     x =>
       R.reduce( ( _, kase ) =>
@@ -284,7 +323,7 @@ const validateTuple =
           )
           ( types )
 
-export const TupleType =
+const TupleType =
   ( name, url, types ) =>
       $.NullaryType( name
                    , url
