@@ -1,3 +1,5 @@
-# Some Sum Type
+# Sum Type Validation
 
-Powerful sum type constructor and library based on sanctuary-def.
+Powerful sum type library based on sanctuary-def with a focus on validation.
+
+

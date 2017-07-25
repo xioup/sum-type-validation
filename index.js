@@ -6,6 +6,8 @@ const S = create( { checkTypes: true, env } )
 const def = $.create( { checkTypes: true, env } )
 
 const log = R.tap( console.log )
+const memo = R.memoize
+const appendTo = R.flip( R.append )
 
 const isOfTypeOrEqual =
     t => x =>
@@ -13,80 +15,73 @@ const isOfTypeOrEqual =
       || ( R.is( Function, t ) && t( x ) === true )
       || t === x
 
+const _isConstructed =
+  name => x =>
+    x[ '@@type' ] === name
+
+// _allCasesTags :: Array( Object ) -> Array( String )
+const _allCasesTags =
+  R.pluck( 'tag' )
+
 const _SumType =
   ( name, url, cases, sharedFns ) =>
     {
+      /*
+      * Set constant values for reuse
+      */
 
-      const hasMatchingCase =
-        x =>
-          R.reduce( ( _, { type } ) =>
-                      isOfTypeOrEqual( type )( x ) === true
-                        ? R.reduced( true )
-                        : false
-                 , false
-                 , cases
-                 )
+      // allCasesTags :: Array( String )
+      // Array with one tag per case
+      const allCasesTags =
+        _allCasesTags( cases )
 
-      const isConstructed =
-        S.allPass( [ //log,
-                     S.pipe( [ //log,
-                               S.get( S.equals( name ), '@@type' )
-                             , log
-                             , S.isJust
-                             ]
-                           )
-                   , S.pipe( [ //log,
-                               S.get( hasMatchingCase, 'value' )
-                             , S.isJust
-                             ]
-                           )
-                   ]
-                 )
+      // allCasesTypes :: Array( Type )
+      // Array with one Type per case
+      const allCasesTypes =
+        R.map( ( { tag, type } ) =>
+                 $.test( [], $.Type, type )
+                   // We have a type - return it
+                   ? type
+                   : R.is( Function, type )
+                     // create Type from predicate function
+                     ? $.NullaryType( tag
+                                    , url
+                                    , y => type( y )
+                                    )
+                     // create Unit Type
+                     : $.NullaryType( tag
+                                    , url
+                                    , y => y === type
+                                    )
+             )
+             ( cases )
 
-      const isConstructedNew =
-        S.pipe( [ //log,
-                  S.toMaybe
-                , S.filterM( S.allPass( [ S.get( S.equals( name ), '@@type' )
-                                        , S.get( hasMatchingCase, 'value' )
-                                        ]
-                                      )
-                           )
-                , log
-                ]
-              )
+      // allCasesTypesMap :: StrMap
+      // StrMap with one Type per case
+      const allCasesTypesMap =
+        R.zipObj( allCasesTags, allCasesTypes )
 
+      // _type :: Type
+      // This is the SumType
       const _type =
         $.NullaryType( name
                      , url
-                     , S.anyPass( [ isConstructed
-                                  , hasMatchingCase
-                                  ]
-                                )
+                     , x =>
+                         isConstructed( x )
+                         || firstMatchingCase( x ) !== false
                      )
 
-      const getValue =
-        x =>
-          isConstructed( x )
-            ? x.value
-            : x
-
-      const _allCasesFnsOrig =
-        R.reduce( ( acc, { tag, fns } ) =>
-                    R.assoc( tag, fns, acc )
-                , {}
-                )
-                ( cases )
-
+      // _allFnNames :: Array( Object ) -> Array( String )
+      // Unique array of all case and default function names
       const _allFnNames =
-        R.pipe( R.reduce( ( acc, { tag, fns } ) =>
-                    R.assoc( tag, fns, acc )
-                , {}
-                )
-              , R.keys
-              , R.reduce( ( acc, x ) =>
-                            R.concat( R.keys( _allCasesFnsOrig[ x ] )
-                                    , acc
-                                    )
+        R.pipe( //log,
+                R.reduce( ( acc, x ) =>
+                            R.pipe( //log,
+                                    R.prop( 'fns' )
+                                  , R.keys
+                                  , R.concat( acc )
+                                  )
+                                  ( x )
                         , []
                         )
               , R.concat( R.keys( sharedFns ) )
@@ -94,25 +89,39 @@ const _SumType =
               )
               ( cases )
 
-      const _assignFn =
-        fnName =>
-          R.reduce( ( acc, { tag, fns } ) =>
-                      R.ifElse( R.is( Function )
-                              , x =>
-                                  R.assocPath( [ tag, fnName ], x, acc )
-                              , _ =>
-                                  { throw new TypeError( `No '${ fnName }' function defined on case '${ tag }' or default.` ) }
-                              )
-                              ( fns[ fnName ]
-                                || sharedFns[ fnName ].defaultFn
-                              )
-                  , {}
-                  )
-                  ( cases )
+      /*
+      * Function definition Begins here
+      */
+
+      const isConstructed = _isConstructed( name )
+
+      const getValue =
+        x =>
+          isConstructed( x )
+            ? x.value
+            : x
+
+      const errNoFnDef =
+        ( fnName, tag ) =>
+          { throw new TypeError( `No '${ fnName }' function defined on case '${ tag }'.` ) }
 
       const _allCasesFns =
-        R.reduce( ( acc, x ) =>
-                    R.mergeDeepLeft( _assignFn( x ), acc )
+        R.reduce( ( acc, fnName ) =>
+                    R.mergeDeepLeft( R.reduce( ( acc2, { tag, fns } ) =>
+                                                 R.ifElse( R.is( Function )
+                                                         , x =>
+                                                             R.assocPath( [ tag, fnName ], x, acc2 )
+                                                         , _ =>
+                                                             errNoFnDef( fnName, tag )
+                                                         )
+                                                         ( fns[ fnName ]
+                                                           || sharedFns[ fnName ].defaultFn
+                                                         )
+                                             , {}
+                                             )
+                                             ( cases )
+                                   , acc
+                                   )
                 , {}
                 )
                 ( _allFnNames )
@@ -133,112 +142,129 @@ const _SumType =
               R.equals( _type, R.last( sig ) )
             return (
               ( ...args ) =>
-                { const typeArg = R.prop( typeArgIndex, args )
+                { const typeArg = args[ typeArgIndex ]
                   const typeArgIsConstructed = isConstructed( typeArg )
-                  const tag = R.prop( 'tag', _toName( typeArg ) )
+                  const tag =
+                    typeArgIsConstructed
+                      ? typeArg.tag
+                      : firstMatchingTag( typeArg )
                   const fn =
                     def( fnName, {}, sig, _allCasesFns[ tag ][ fnName ] )
-                  const prepArgs =
-                    arg =>
-                      R.equals( tag, arg.tag )
-                        ? arg.value
-                        : arg
-                  const bare = fn( ...R.map( prepArgs, args ) )
+                  const bare =
+                    fn( ...R.map( arg =>
+                                  tag === arg.tag
+                                    ? arg.value
+                                    : arg
+                                )
+                                ( args )
+                    )
                   return (
                     typeArgIsConstructed
                     && returnsOurType
-                      ? _toName( bare )
+                      ? _toFirstMatch( bare )
                       : bare
                   )
                 }
             )
           }
 
-      const _makeSharedFns =
-        fnName =>
-          [ fnName
-          , _dispatchFn( fnName )
-          ]
-
+      // _sharedFns -> Pair( String, Fn )
       const _sharedFns =
-        _allFnNames.map( _makeSharedFns )
+        R.map( fnName =>
+                 [ fnName
+                 , _dispatchFn( fnName )
+                 ]
+             )
+             ( _allFnNames )
 
-      const staticToInstance =
-        x => ( [ name, fn ] ) =>
-          [ name
-          , ( ...z ) =>
-              fn( ...R.append( _toName( x ), z ) )
-          ]
-
-      const _makeInstanceMethods =
-        x =>
-          R.pipe( //log,
-                  R.map( staticToInstance( x ) )
-                , R.fromPairs
-                )
-                ( _sharedFns )
-
+      // allTags :: Any -> Array( String )
       // returns all tags that an input value 'has' (or could have)
       const allTags =
         x =>
-          R.is( Array, x.allTags )
-          ? x.allTags
-          : R.reduce(
-              ( acc, kase ) =>
-                isOfTypeOrEqual( kase.type )( getValue( x ) ) === true
-                  ? R.append( kase.tag, acc )
-                  : acc
-              , []
-              , cases
-            )
+          R.reduce(
+            ( acc, kase ) =>
+              isOfTypeOrEqual( kase.type )( getValue( x ) ) === true
+                ? R.append( kase.tag, acc )
+                : acc
+            , []
+          )
+          ( cases )
 
+      // tagIt :: Any -> Object -> SumType
       const _tagIt =
         def( 'tagIt'
            , {}
-           , [ $.Object, _type, _type ]
-           , ( kase, x ) =>
-               { const r =
-                   { ..._makeInstanceMethods( x )
-                   , name
-                   , url
-                   , value: R.clone( x )
-                   , [ 'is' + kase.tag ]: true
-                   , tag: kase.tag
-                   , allTags: allTags( x )
-                   , '@@type': name
-                   }
-                 r.constructor = name
-                 return r
-               }
+           , [ _type, $.Object, _type ]
+           , ( x, kase ) =>
+               (
+                 { ...R.pipe( //log,
+                              R.map( ( [ name, fn ] ) =>
+                                       [ name
+                                       , memo( ( ...ys ) =>
+                                                 fn( ...R.pipe( //log,
+                                                                R.clone
+                                                              , _toFirstMatch
+                                                              , appendTo( ys )
+                                                              )
+                                                              ( x )
+                                                   )
+                                             )
+                                       ]
+                                   )
+                            , R.fromPairs
+                            )
+                            ( _sharedFns )
+                 , name
+                 , url
+                 , value: x
+                 , [ 'is' + kase.tag ]: true
+                 , tag: kase.tag
+                 , allTags: memo( _ => allTags( x ) )
+                 //, hasTags: memo( tagNames => hasTags( x ) )
+                 , '@@type': name
+                 }
+               )
            )
 
-      const _toName =
+      // firstMatchingCase :: Any -> Object
+      const firstMatchingCase =
         x =>
           R.reduce( ( _, kase ) =>
-                      { const value = getValue( x )
-                        return(
-                          isOfTypeOrEqual( kase.type )( value ) === true
-                            ? R.reduced( _tagIt( kase )( value ) )
-                            : false
-                        )
-                      }
+                      isOfTypeOrEqual( kase.type )( getValue( x ) ) === true
+                        ? R.reduced( kase )
+                        : false
                   , false
-                  , cases
                   )
-      const toName = def( 'toName', {}, [ $.Any, _type ], _toName )
+                  ( cases )
 
-      const allCaseTags =
-        R.pluck( 'tag', cases )
+      // firstMatchingTag :: Any -> String
+      const firstMatchingTag =
+        R.pipe( //log,
+                firstMatchingCase
+              , R.prop( 'tag' )
+              )
 
+      // toFirstMatch :: Any -> SumType
+      const _toFirstMatch =
+        x =>
+          R.pipe( //log,
+                  firstMatchingCase
+                , _tagIt( x )
+                )
+                ( x )
+      const toFirstMatch = def( 'toFirstMatch', {}, [ $.Any, _type ], _toFirstMatch )
+
+      // is :: String -> Any -> Either( ? )
       const is =
         ( tagName, x ) =>
-          !R.contains( tagName, allCaseTags )
+          !R.contains( tagName, allCasesTags )
           ? S.Left( `Sum Type '${ name }' does not have a tag named '${ tagName }'.` )
           : x.tag === tagName
             || R.contains( tagName, allTags( x ) )
               ? S.Right( x )
               : S.Left( `Input does not have the '${ tagName }' tag.` )
 
+      // hasTags :: String -> SumType -> Either( ? )
       const hasTags =
         ( tagNames, x ) =>
           R.reduce(
@@ -250,43 +276,39 @@ const _SumType =
             , tagNames
           )
 
-      const _makeCaseConstructors =
-        kase =>
-          typeof kase.valueConstructor !== 'undefined'
-            ? [ kase.tag
-              , kase.valueConstructor
-              ]
-            : [ kase.tag
-              , x =>
-                  isOfTypeOrEqual( kase.type )( x )
-                  ? _tagIt( kase )( x )
-                  : log( S.Left( 'invalid value - need to fix this in _makeCaseConstructors' ) )
-              ]
-
-      const _makeCaseTypes =
-        kase =>
-          [ kase.tag + 'Type'
-          , $.NullaryType( kase.tag
-                         , url
-                         , x => is( kase.tag, x )
-                         )
-          ]
-
-      const r =
+      return(
         { [ name ]: _type // 'matches constructed and bare values'
-        , [ 'to' + name ]: toName
+        , [ 'to' + name ]: toFirstMatch
         , isConstructed
         , getValue
         , allTags
         , is
         , hasTags
-        , ...R.fromPairs( cases.map( _makeCaseConstructors ) )
-        , ...R.fromPairs( cases.map( _makeCaseTypes ) )
+          // case constructors
+        , ...R.fromPairs( R.map( kase =>
+                                   [ kase.tag
+                                   , x =>
+                                       isOfTypeOrEqual( kase.type )( x )
+                                       ? _tagIt( x )( kase )
+                                       : log( S.Left( 'invalid value - need to fix this' ) )
+                                   ]
+                               )
+                               ( cases )
+                        )
+          // case types
+        , ...R.fromPairs( R.map( ( { tag } ) =>
+                                   [ tag + 'Type'
+                                   , $.NullaryType( tag
+                                                  , url
+                                                  , x => is( tag, x )
+                                                  )
+                                   ]
+                               )
+                               ( cases )
+                        )
         , ...R.fromPairs( _sharedFns )
         }
-      r.constructor = 'SumType'
-
-      return r
+      )
     }
 
 const SumType =
@@ -301,7 +323,7 @@ const UntaggedSumType =
   ( name, url, cases ) =>
     x =>
       R.reduce( ( _, kase ) =>
-                  isOfTypeOrEqual( x )( kase ) === true
+                  isOfTypeOrEqual( kase )( x ) === true
                     ? R.reduced( x )
                     : S.Left( 'No match' )
               , false
@@ -310,7 +332,7 @@ const UntaggedSumType =
 
 const validateTupleEntries =
   R.reduce( ( _, [ x, type ] ) =>
-              isOfTypeOrEqual( x )( type ) === true
+              isOfTypeOrEqual( type )( x ) === true
               || R.reduced( false )
           , false
           )
@@ -330,4 +352,9 @@ const TupleType =
                    , ( ...x ) =>
                        validateTuple( x )( types ) === true
                    )
+const Point1 =
+  TupleType( 'Point'
+           , 'url'
+           , [ $.ValidNumber, $.ValidNumber ]
+           )
 //endregion

@@ -11,7 +11,8 @@ const log = R.tap( console.log )
 
 //region Definitions
 //    Point :: Type
-const Point = $.Pair( $.ValidNumber, $.ValidNumber )
+const Point =
+  $.Pair( $.ValidNumber, $.ValidNumber )
 
 //    Shape :: Type
 const Shape =
@@ -21,12 +22,16 @@ const Shape =
              , type: $.RecordType( { origin: Point, radius: $.ValidNumber } )
              , fns: { area: ( { radius } ) => Math.PI * radius * radius }
              }
+           , { tag: 'Square'
+             , type: $.RecordType( { origin: Point, side: $.ValidNumber } )
+             , fns: { area: ( { side } ) => side * side }
+             }
            , { tag: 'Rectangle'
              , type: $.RecordType( { origin: Point, dimensions: Point } )
              , fns: { area: ( { dimensions : [ w, h ] } ) => w * h }
              }
            ]
-         , { move: { sig: sumType => [ Point, sumType, sumType ]
+         , { move: { sig: sumTypes => [ Point, sumTypes, sumTypes ]
                    , defaultFn:
                       ( [ dx, dy ], shape ) =>
                         R.over( R.lensProp( 'origin' )
@@ -35,7 +40,7 @@ const Shape =
                               , shape
                               )
                    }
-           , area: { sig: sumType => [ sumType, $.ValidNumber ] }
+           , area: { sig: sumTypes => [ sumTypes, $.ValidNumber ] }
            }
          )
 
