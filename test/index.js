@@ -1,14 +1,3 @@
-import * as R           from "ramda"
-import { create, env }  from "sanctuary"
-import $                from "sanctuary-def"
-
-import SumType          from "../index"
-
-const S = create( { checkTypes: true, env } )
-const def = $.create( { checkTypes: true, env } )
-
-const log = R.tap( console.log )
-
 //region Definitions
 //    Point :: Type
 const Point =
@@ -17,6 +6,7 @@ const Point =
 //    Shape :: Type
 const Shape =
   SumType( 'Shape'
+         , 2
          , 'url'
          , [ { tag: 'Circle'
              , type: $.RecordType( { origin: Point, radius: $.ValidNumber } )
@@ -27,11 +17,11 @@ const Shape =
              , fns: { area: ( { side } ) => side * side }
              }
            , { tag: 'Rectangle'
-             , type: $.RecordType( { origin: Point, dimensions: Point } )
-             , fns: { area: ( { dimensions : [ w, h ] } ) => w * h }
+             , type: $.RecordType( { origin: Point, sides: Point } )
+             , fns: { area: ( { sides : [ w, h ] } ) => w * h }
              }
            ]
-         , { move: { sig: sumTypes => [ Point, sumTypes, sumTypes ]
+         , { move: { sig: ts => [ Point, ts.SumType, ts.SumType ]
                    , defaultFn:
                       ( [ dx, dy ], shape ) =>
                         R.over( R.lensProp( 'origin' )
@@ -40,12 +30,13 @@ const Shape =
                               , shape
                               )
                    }
-           , area: { sig: sumTypes => [ sumTypes, $.ValidNumber ] }
+           , area: { sig: ts => [ ts.SumType, $.ValidNumber ] }
            }
          )
 
 const Offer =
   SumType( 'Offer'
+         , 1
          , 'url'
          , [ { tag: 'NeverSaved'
              , type: $.RecordType( { id: $.Null } )
@@ -65,6 +56,7 @@ const Offer =
 
 const Deal =
   SumType( 'Deal'
+         , 1
          , 'url'
          , [ { tag: 'NeverSaved'
              , type: $.RecordType( { id: $.Null } )
@@ -125,8 +117,9 @@ const ShapeChecks =
   (
     { z: ','
     , '0 Shape': Shape
-    , '1 Inf Circle': Shape.toShape( { origin: [ 1, 2 ], radius: 3 } )
-    , '2 Inf Rectangle': Shape.toShape( { origin: [ 0, 0 ], dimensions: [ 5, 5 ] } )
+    , '1 Inf Circle': Shape.toShape( { origin: [ 1, 2 ], radius: 2 } )
+    , '2 Inf Square': Shape.toShape( { origin: [ 1, 2 ], side: 4 } )
+    , '3 Inf Rectangle': Shape.toShape( { origin: [ 0, 0 ], sides: [ 5, 5 ] } )
     //, '3 Inf NoMatch_1': Shape.toShape( [ [ 1, 2 ] ] )
     //, '4 Inf NoMatch_2': Shape.toShape( [ [ 1, 2 ], [ true ] ] )
     }
@@ -178,19 +171,24 @@ const RegexFlagsChecks =
     , Z: RegexFlags( 'z' )
     }
   )
+//endregion
 
 if ( typeof window !== 'undefined' ) {
   window.$ = $
   window.S = S
+  window.type = type
   window.def = def
   window.Shape = Shape
-  window.circle = Shape.toShape( { origin: [ 1, 2 ], radius: 3 } )
-  window.rectangle = Shape.toShape( { origin: [ 0, 0 ], dimensions: [ 5, 5 ] } )
+  window.circleDef = { origin: [ 1, 2 ], radius: 2 }
+  window.circle = Shape.toShape( window.circleDef )
+  window.squareDef = { origin: [ 1, 2 ], side: 4 }
+  window.square = Shape.toShape( window.squareDef )
+  window.rectDef = { origin: [ 0, 0 ], sides: [ 5, 5 ] }
+  window.rect = Shape.toShape( window.rectDef )
   window.Offer = Offer
   window.Deal = Deal
   window.dealNeverSaved = Deal.toDeal( { id: null } )
 }
-//endregion
 
 console.group( 'union-types' )
 console.log( 'PointChecks', PointChecks() )
