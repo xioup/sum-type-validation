@@ -6,6 +6,7 @@ import concat         from "ramda/src/concat"
 import contains       from "ramda/src/contains"
 import converge       from "ramda/src/converge"
 import curryN         from "ramda/src/curryN"
+//import either         from "ramda/src/either"
 import equals         from "ramda/src/equals"
 import findLastIndex  from "ramda/src/findLastIndex"
 import find           from "ramda/src/find"
@@ -43,6 +44,7 @@ export default
   , contains
   , converge
   , curryN
+//  , either
   , equals
   , findLastIndex
   , find

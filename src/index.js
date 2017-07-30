@@ -24,32 +24,27 @@ export const createSumTypeFactory = options => {
 
   const _SumType = ( name, version, url, cases, fnSigs ) =>
   {
-    /*
-    * Set constant and "constant" values for reuse
-    */
-
     const typeIdentifier = `${ nameSpace }/${ name }@${ version }`
 
     const SumTypeTypeRep = { '@@type': typeIdentifier }
 
     const isConstructed =
-        x => type( x ) === typeIdentifier
+        x => typeIdentifier === type( x )
 
     // SumTypeType :: Type
     const SumTypeType =
-      $.NullaryType( `${ nameSpace }/${ name }.${ name }`
-                   , url
-                   , x =>
+      $.NullaryType( `${ nameSpace }/${ name }.${ name }` )
+                   ( url )
+                   ( x =>
                        isConstructed( x )
-                       || _firstMatchingCase( x ) !== false
+                       || false !== _firstMatchingCase( x )
                    )
 
     // PlaceholderType :: Type
     const PlaceholderType =
-      $.NullaryType( `${ nameSpace }/${ name }._PlaceholderType`
-                   , url
-                   , _ => false
-                   )
+      $.NullaryType( `${ nameSpace }/${ name }._PlaceholderType` )
+                   ( url )
+                   ( _ => false )
 
     // _allCasesMap :: StrMap( Case )
     const _allCasesMap =
@@ -69,13 +64,10 @@ export const createSumTypeFactory = options => {
                          ( $.NullaryType( `${ nameSpace }/${ name }.${ tag }` )
                                         ( url )
                                         ( nTest( $.Type, t )
-                                            // We have a type - wrap and return it
-                                            ? x => nTest( t, _value( x ) )
+                                            ? x => nTest( t, _getValue( x ) ) // Type
                                             : R.is( Function, t )
-                                              // create Type from predicate
-                                              ? x => t( _value( x ) )
-                                              // create Unit Type
-                                              : x => t === _value( x )
+                                              ? x => t( _getValue( x ) ) // Predicate
+                                              : x => t === _getValue( x ) // Unit
                                         )
                          )
                          ( acc )
@@ -100,16 +92,12 @@ export const createSumTypeFactory = options => {
           )
           ( _allCasesMap )
 
-    /*
-    * Function definition Begins here
-    */
-
     const _throwMissingFunctionErr =
       ( fnName, tag ) =>
         { throw new TypeError( `No '${ fnName }' function defined on case '${ tag }'.` ) }
 
     const _getFnDispatchMap =
-      ( fnName, sig ) =>
+      fnName => sig =>
         R.fromPairs(
           R.map( tag =>
                    { const fn =
@@ -118,6 +106,7 @@ export const createSumTypeFactory = options => {
                      return(
                        R.is( Function, fn )
                          ? checkTypes
+                           // we're checking types - return defined function
                            ? [ tag
                              , def( fnName )
                                   ( {} )
@@ -128,6 +117,7 @@ export const createSumTypeFactory = options => {
                                   )
                                   ( fn )
                              ]
+                           // we're not checking types, return the raw function
                            : fn
                          : _throwMissingFunctionErr( fnName, tag )
                      )
@@ -142,20 +132,27 @@ export const createSumTypeFactory = options => {
 
     const _dispatchFn =
       fnName =>
-        { const sigFn = R.prop( fnName, fnSigs )
+        { const sigFn =
+            R.prop( fnName )
+                  ( fnSigs )
           const sig = sigFn( _allTypesMap )
-          if ( !nTest( $.Array( $.Type ), sig ) )
+          if ( !nTest( $.Array( $.Type ) )
+                     ( sig )
+             )
             _throwMissingSignatureErr( fnName, name )
           // Get the index of the last __input__ that is of our SumType. This is used to determine
           // whether or not to return a constructed value when the return value is toName our SumTypeType.
           const typeArgIndex =
-            R.findLastIndex( contains_( R.values( _allTypesMap ) ), R.init( sig ) )
+            R.findLastIndex( contains_( R.values( _allTypesMap ) ) )
+                           ( R.init( sig ) )
           // If we return a value of our SumType and the last __input__ of our SumType is constructed,
           // we return a constructed value, otherwise a bare value.
           const returnsOurType =
-            R.contains( R.last( sig ), R.values( _allTypesMap ) )
+            R.contains( R.last( sig ) )
+                      ( R.values( _allTypesMap ) )
           const dispatchMap =
-            _getFnDispatchMap( fnName, sig )
+            _getFnDispatchMap( fnName )
+                             ( sig )
 
           return (
             R.curryN( _staticFnArity( fnName ) )
@@ -163,10 +160,10 @@ export const createSumTypeFactory = options => {
                        { const x = args[ typeArgIndex ]
                          const kase = _firstMatchingCase( x )
                          const bareRes =
-                           dispatchMap[ kase.tag ]( ...R.map( _value )( args ) )
+                           dispatchMap[ kase.tag ]( ...R.map( _getValue )( args ) )
                          return(
                            returnsOurType && isConstructed( x )
-                             ? tagIt( bareRes, kase )
+                             ? makeMember( bareRes, kase )
                              : bareRes
                          )
                        }
@@ -174,22 +171,33 @@ export const createSumTypeFactory = options => {
           )
         }
 
-    // _staticFnArity :: NonNegativeInteger
+    // _staticFnArity :: String -> NonNegativeInteger
     const _staticFnArity =
-      fnName => R.prop( fnName, fnSigs )( _allTypesMap ).length - 1
+      fnName =>
+        R.prop( fnName )
+              ( fnSigs )
+              ( _allTypesMap ).length - 1
 
-    // _instanceFnArity :: NonNegativeInteger
+    // _instanceFnArity :: String -> NonNegativeInteger
     const _instanceFnArity =
-      fnName => _staticFnArity( fnName ) - 1
+      fnName =>
+        R.prop( fnName )
+              ( fnSigs )
+              ( _allTypesMap ).length - 2
 
-    // _sharedFns :: Tuple( String, Fn, $.NonNegativeInteger )
+    // _sharedFns :: Tuple( String, Fn, NonNegativeInteger )
     const _sharedFns =
-      R.map( o( R.ap( [ x => x, _dispatchFn, _instanceFnArity ] ) )
+      R.map( o( R.ap( [ x => x
+                      , _dispatchFn
+                      , _instanceFnArity
+                      ]
+                    )
+              )
               ( R.of )
            )
            ( _allFnNames )
 
-    const _value =
+    const _getValue =
       R.ifElse( isConstructed )
               ( x => x.value )
               ( x => x )
@@ -213,8 +221,8 @@ export const createSumTypeFactory = options => {
               ( x => x.tags( 0 ) )
               ( tags )
 
-    // tagIt :: Any -> Case -> SumType
-    const _tagIt =
+    // makeMember :: Any -> Case -> SumType
+    const _makeMember =
       ( x, { tag } ) =>
         { const value =
             checkTypes && R.is( Object )
@@ -246,7 +254,7 @@ export const createSumTypeFactory = options => {
           )
           return r
         }
-    const tagIt = def( 'tagIt', {}, [ SumTypeType, $.Object, SumTypeType ], _tagIt )
+    const makeMember = def( 'makeMember', {}, [ SumTypeType, $.Object, SumTypeType ], _makeMember )
 
     // _firstMatchingCase :: Any -> Object
     const _firstMatchingCase =
@@ -264,8 +272,8 @@ export const createSumTypeFactory = options => {
 
     // toFirstMatch :: Any -> SumType
     const _toFirstMatch =
-      R.converge( tagIt )
-                ( [ _value, _firstMatchingCase ] )
+      R.converge( makeMember )
+                ( [ _getValue, _firstMatchingCase ] )
 
     // _getTag :: Any -> string
     const _getTag =
@@ -301,14 +309,14 @@ export const createSumTypeFactory = options => {
     return(
       { [ name + 'Type' ]: SumTypeType
       , [ name ]: def( 'toFirstMatch', {}, [ $.Any, SumTypeType ], _toFirstMatch )
-      , value: _value
+      , value: _getValue
       , tag: def( 'getTag', {}, [ $.Any, $.String ], _getTag )
       , tags: _dispatchTags
       , is
       , hasTags
-           // caseFns :: StrMap( Function )
+        // caseFns :: StrMap( Function )
       , ...R.fromPairs( _sharedFns )
-           // caseTypes :: StrMap( Type )
+        // caseTypes :: StrMap( Type )
       , ...pipe( [ R.toPairs
                  , R.map( R.over( R.lensIndex( 0 )
                                 , concat_( 'Type' )
@@ -318,7 +326,7 @@ export const createSumTypeFactory = options => {
                  ]
                )
                ( _allCasesTypesMap )
-           // caseConstructors :: StrMap( Function )
+        // caseConstructors :: StrMap( Function )
       , ...R.map( ( { tag } ) =>
                     def( `${ name }.${ tag }`
                        , {}

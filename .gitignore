@@ -1,5 +1,4 @@
 # Created by .ignore support plugin (hsz.mobi)
-### Example user template template
 ### Example user template
 
 # IntelliJ project files
@@ -23,6 +22,9 @@ gen### JetBrains template
 .idea/**/sqlDataSources.xml
 .idea/**/dynamic.xml
 .idea/**/uiDesigner.xml
+
+#node_modules
+node_modules/
 
 # Gradle:
 .idea/**/gradle.xml
