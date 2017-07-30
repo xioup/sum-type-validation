@@ -1,12 +1,8 @@
-import * as R   from "ramda"
-import * as R_  from "./ramda"
-import { env }  from "sanctuary"
+import R        from "./R"
 import $        from "sanctuary-def"
 import type     from "sanctuary-type-identifiers"
 
-//const S = createSumTypeFactory( { checkTypes: true, env } )
-
-const log = R.tap( console.log )
+// const log = R.tap( console.log )
 
 const memo = R.memoize
 const nTest = $.test( [] )
@@ -14,12 +10,14 @@ const o = f => g => h => f( g( h ) )
 const contains_ = R.flip( R.contains )
 const concat_ = R.flip( R.concat )
 const W = f => x => f( x )( x )
-
+const pipe =
+  fns => data =>
+    fns.reduce( ( acc, fn ) => fn( acc ), data )
 
 export const createSumTypeFactory = options => {
   const def = $.create( options )
 
-  const { checkTypes, env } = options
+  const { checkTypes } = options
 
   // nameSpace :: String
   const nameSpace = `sum-type-validation`
@@ -50,7 +48,7 @@ export const createSumTypeFactory = options => {
     const PlaceholderType =
       $.NullaryType( `${ nameSpace }/${ name }._PlaceholderType`
                    , url
-                   , x => false
+                   , _ => false
                    )
 
     // _allCasesMap :: StrMap( Case )
@@ -72,21 +70,12 @@ export const createSumTypeFactory = options => {
                                         ( url )
                                         ( nTest( $.Type, t )
                                             // We have a type - wrap and return it
-                                            ? x =>
-                                                type( x ) === typeIdentifier
-                                                  ? nTest( t, x.value )
-                                                  : nTest( t, x )
+                                            ? x => nTest( t, _value( x ) )
                                             : R.is( Function, t )
-                                              // createSumTypeFactory Type from predicate function
-                                              ? x =>
-                                                  type( x ) === typeIdentifier
-                                                    ? t( x.value )
-                                                    : t( x )
-                                              // createSumTypeFactory Unit Type
-                                              : x =>
-                                                  type( x ) === typeIdentifier
-                                                    ? t === x.value
-                                                    : t === x
+                                              // create Type from predicate
+                                              ? x => t( _value( x ) )
+                                              // create Unit Type
+                                              : x => t === _value( x )
                                         )
                          )
                          ( acc )
@@ -102,7 +91,7 @@ export const createSumTypeFactory = options => {
 
     // _allFnNames :: Array( String )
     const _allFnNames =
-      R_.p( [ R.pluck( 'fns' )
+      pipe( [ R.pluck( 'fns' )
             , R.map( R.keys )
             , R.values
             , R.flatten
@@ -128,16 +117,18 @@ export const createSumTypeFactory = options => {
                              ( _allCasesMap )
                      return(
                        R.is( Function, fn )
-                         ? [ tag
-                           , def( fnName )
-                                ( {} )
-                                ( R.map( R.when( R.equals( PlaceholderType ) )
-                                               ( _ => _allCasesTypesMap[ tag ] )
-                                       )
-                                       ( sig )
-                                )
-                                ( fn )
-                           ]
+                         ? checkTypes
+                           ? [ tag
+                             , def( fnName )
+                                  ( {} )
+                                  ( R.map( R.when( R.equals( PlaceholderType ) )
+                                                 ( _ => _allCasesTypesMap[ tag ] )
+                                         )
+                                         ( sig )
+                                  )
+                                  ( fn )
+                             ]
+                           : fn
                          : _throwMissingFunctionErr( fnName, tag )
                      )
                    }
@@ -219,7 +210,7 @@ export const createSumTypeFactory = options => {
     // This lets us memoize calls to the tags 'instance' method
     const _dispatchTags =
       R.ifElse( isConstructed )
-              ( x => x.tags() )
+              ( x => x.tags( 0 ) )
               ( tags )
 
     // tagIt :: Any -> Case -> SumType
@@ -236,7 +227,7 @@ export const createSumTypeFactory = options => {
             , tag
             , '@@type':       typeIdentifier
             , constructor:    SumTypeTypeRep
-            , tags:           R.once( _ => tags( r ) )
+            , tags:           memo( _ => tags( r ) )
             , is:             memo( tag => is( tag, r ) )
             , hasTags:        memo( tagNames => hasTags( tagNames, r ) )
             , [ 'is' + tag ]: true
@@ -274,7 +265,7 @@ export const createSumTypeFactory = options => {
     // toFirstMatch :: Any -> SumType
     const _toFirstMatch =
       R.converge( tagIt )
-                ( [ x => x, _firstMatchingCase ] )
+                ( [ _value, _firstMatchingCase ] )
 
     // _getTag :: Any -> string
     const _getTag =
@@ -318,7 +309,7 @@ export const createSumTypeFactory = options => {
            // caseFns :: StrMap( Function )
       , ...R.fromPairs( _sharedFns )
            // caseTypes :: StrMap( Type )
-      , ...R_.p( [ R.toPairs
+      , ...pipe( [ R.toPairs
                  , R.map( R.over( R.lensIndex( 0 )
                                 , concat_( 'Type' )
                                 )
@@ -328,7 +319,15 @@ export const createSumTypeFactory = options => {
                )
                ( _allCasesTypesMap )
            // caseConstructors :: StrMap( Function )
-      , ...R.map( _ => _toFirstMatch )
+      , ...R.map( ( { tag } ) =>
+                    def( `${ name }.${ tag }`
+                       , {}
+                       , [ _allCasesTypesMap[ tag ]
+                         , _allCasesTypesMap[ tag ]
+                         ]
+                       , _toFirstMatch
+                       )
+                )
                 ( _allCasesMap )
       }
     )
