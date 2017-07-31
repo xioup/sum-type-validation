@@ -2,6 +2,7 @@
 import ap             from "ramda/src/ap"
 import append         from "ramda/src/append"
 import assoc          from "ramda/src/assoc"
+import clone          from "ramda/src/clone"
 import concat         from "ramda/src/concat"
 import contains       from "ramda/src/contains"
 import converge       from "ramda/src/converge"
@@ -21,6 +22,7 @@ import last           from "ramda/src/last"
 import lensIndex      from "ramda/src/lensIndex"
 import map            from "ramda/src/map"
 import memoize        from "ramda/src/memoize"
+import merge          from "ramda/src/merge"
 import of             from "ramda/src/of"
 import over           from "ramda/src/over"
 import path           from "ramda/src/path"
@@ -40,6 +42,7 @@ export default
     ap
   , append
   , assoc
+  , clone
   , concat
   , contains
   , converge
@@ -59,6 +62,7 @@ export default
   , lensIndex
   , map
   , memoize
+  , merge
   , of
   , over
   , path
