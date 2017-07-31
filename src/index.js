@@ -6,6 +6,7 @@ import type     from "sanctuary-type-identifiers"
 
 const memo = R.memoize
 const nTest = $.test( [] )
+const nType = $.NullaryType
 const o = f => g => h => f( g( h ) )
 const contains_ = R.flip( R.contains )
 const concat_ = R.flip( R.concat )
@@ -33,18 +34,18 @@ export const createSumTypeFactory = options => {
 
     // SumTypeType :: Type
     const SumTypeType =
-      $.NullaryType( `${ nameSpace }/${ name }.${ name }` )
-                   ( url )
-                   ( x =>
-                       isConstructed( x )
-                       || false !== _firstMatchingCase( x )
-                   )
+      nType( `${ nameSpace }/${ name }.${ name }` )
+           ( url )
+           ( x =>
+               isConstructed( x )
+               || false !== _firstMatchingCase( x )
+           )
 
     // PlaceholderType :: Type
     const PlaceholderType =
-      $.NullaryType( `${ nameSpace }/${ name }._PlaceholderType` )
-                   ( url )
-                   ( _ => false )
+      nType( `${ nameSpace }/${ name }._PlaceholderType` )
+           ( url )
+           ( _ => false )
 
     // _allCasesMap :: StrMap( Case )
     const _allCasesMap =
@@ -61,19 +62,19 @@ export const createSumTypeFactory = options => {
     const _allCasesTypesMap =
       R.reduce( ( acc, { tag, type: t } ) =>
                   R.assoc( tag )
-                         ( $.NullaryType( `${ nameSpace }/${ name }.${ tag }` )
-                                        ( url )
-                                        ( nTest( $.Type, t )
-                                            ? x => nTest( t, _getValue( x ) ) // Type
-                                            : R.is( Function, t )
-                                              ? x => t( _getValue( x ) ) // Predicate
-                                              : x => t === _getValue( x ) // Unit
-                                        )
+                         ( nType( `${ nameSpace }/${ name }.${ tag }` )
+                                ( url )
+                                ( nTest( $.Type, t )
+                                    ? x => nTest( t, _getValue( x ) ) // Type
+                                    : R.is( Function, t )
+                                      ? x => t( _getValue( x ) ) // Predicate
+                                      : x => t === _getValue( x ) // Unit
+                                )
                          )
                          ( acc )
-           )
-           ( {} )
-           ( cases )
+              )
+              ( {} )
+              ( cases )
 
     // _allTypesMap :: StrMap( Type )
     const _allTypesMap =
@@ -136,9 +137,7 @@ export const createSumTypeFactory = options => {
             R.prop( fnName )
                   ( fnSigs )
           const sig = sigFn( _allTypesMap )
-          if ( !nTest( $.Array( $.Type ) )
-                     ( sig )
-             )
+          if ( !nTest( $.Array( $.Type ), sig ) )
             _throwMissingSignatureErr( fnName, name )
           // Get the index of the last __input__ that is of our SumType. This is used to determine
           // whether or not to return a constructed value when the return value is toName our SumTypeType.
@@ -171,19 +170,20 @@ export const createSumTypeFactory = options => {
           )
         }
 
-    // _staticFnArity :: String -> NonNegativeInteger
-    const _staticFnArity =
+    // _fnSigLength :: String -> NonNegativeInteger
+    const _fnSigLength =
       fnName =>
         R.prop( fnName )
               ( fnSigs )
-              ( _allTypesMap ).length - 1
+              ( _allTypesMap ).length
+
+    // _staticFnArity :: String -> NonNegativeInteger
+    const _staticFnArity =
+        fnName => _fnSigLength( fnName ) - 1
 
     // _instanceFnArity :: String -> NonNegativeInteger
     const _instanceFnArity =
-      fnName =>
-        R.prop( fnName )
-              ( fnSigs )
-              ( _allTypesMap ).length - 2
+        fnName => _fnSigLength( fnName ) - 2
 
     // _sharedFns :: Tuple( String, Fn, NonNegativeInteger )
     const _sharedFns =
@@ -279,7 +279,7 @@ export const createSumTypeFactory = options => {
     const _getTag =
       R.ifElse( isConstructed )
               ( x => x.tag )
-              ( o( R.prop( 'tag' ) )
+              ( o( x => x.tag )
                  ( _firstMatchingCase )
               )
 
