@@ -2,7 +2,8 @@ import R        from "./R"
 import $        from "sanctuary-def"
 import type     from "sanctuary-type-identifiers"
 
-// const log = R.tap( console.log )
+const log = R.tap( console.log )
+log( 'lass mich in ruehe' )
 
 const memo = R.memoize
 const nTest = $.test( [] )
@@ -68,7 +69,7 @@ export const createSumTypeFactory = options => {
                                     ? x => nTest( t, _getValue( x ) ) // Type
                                     : R.is( Function, t )
                                       ? x => t( _getValue( x ) ) // Predicate
-                                      : x => t === _getValue( x ) // Unit
+                                      : x => R.equals( t, _getValue( x ) ) // Unit
                                 )
                          )
                          ( acc )
@@ -78,8 +79,10 @@ export const createSumTypeFactory = options => {
 
     // _allTypesMap :: StrMap( Type )
     const _allTypesMap =
-      R.assoc( 'PT' )
-             ( PlaceholderType )
+      R.merge( { __: PlaceholderType
+               , ST: SumTypeType
+               }
+             )
              ( _allCasesTypesMap )
 
     // _allFnNames :: Array( String )
@@ -136,8 +139,10 @@ export const createSumTypeFactory = options => {
         { const sigFn =
             R.prop( fnName )
                   ( fnSigs )
+          if ( typeof sigFn !== 'function' )
+            _throwMissingSignatureErr( fnName, name )
           const sig = sigFn( _allTypesMap )
-          if ( !nTest( $.Array( $.Type ), sig ) )
+          if ( !nTest( $.Array( $.Type ), sig ) || sig.length < 2 )
             _throwMissingSignatureErr( fnName, name )
           // Get the index of the last __input__ that is of our SumType. This is used to determine
           // whether or not to return a constructed value when the return value is toName our SumTypeType.
@@ -146,8 +151,12 @@ export const createSumTypeFactory = options => {
                            ( R.init( sig ) )
           // If we return a value of our SumType and the last __input__ of our SumType is constructed,
           // we return a constructed value, otherwise a bare value.
+          const outputType = R.last( sig )
+          const outputIsPlaceholderType =
+            R.equals( outputType )
+                    ( PlaceholderType )
           const returnsOurType =
-            R.contains( R.last( sig ) )
+            R.contains( outputType )
                       ( R.values( _allTypesMap ) )
           const dispatchMap =
             _getFnDispatchMap( fnName )
@@ -157,12 +166,15 @@ export const createSumTypeFactory = options => {
             R.curryN( _staticFnArity( fnName ) )
                     ( ( ...args ) =>
                        { const x = args[ typeArgIndex ]
-                         const kase = _firstMatchingCase( x )
+                         const kase =
+                           _firstMatchingCase( x )
                          const bareRes =
                            dispatchMap[ kase.tag ]( ...R.map( _getValue )( args ) )
                          return(
                            returnsOurType && isConstructed( x )
-                             ? makeMember( bareRes, kase )
+                             ? outputIsPlaceholderType
+                               ? makeMember( bareRes, kase )
+                               : _toFirstMatch( bareRes )
                              : bareRes
                          )
                        }
@@ -226,7 +238,7 @@ export const createSumTypeFactory = options => {
       ( x, { tag } ) =>
         { const value =
             checkTypes && R.is( Object )
-              ? Object.freeze( Object.assign( {}, x ) )
+              ? Object.freeze( R.clone( x ) )
               : x
           const r =
             { name
@@ -275,6 +287,7 @@ export const createSumTypeFactory = options => {
       R.converge( makeMember )
                 ( [ _getValue, _firstMatchingCase ] )
 
+    // TODO need to throw own TypeError on non member input
     // _getTag :: Any -> string
     const _getTag =
       R.ifElse( isConstructed )
@@ -333,7 +346,8 @@ export const createSumTypeFactory = options => {
                        , [ _allCasesTypesMap[ tag ]
                          , _allCasesTypesMap[ tag ]
                          ]
-                       , _toFirstMatch
+                       , x =>
+                           _makeMember( _getValue( x ), { tag } )
                        )
                 )
                 ( _allCasesMap )
