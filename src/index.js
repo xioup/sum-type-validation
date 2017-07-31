@@ -3,7 +3,7 @@ import $        from "sanctuary-def"
 import type     from "sanctuary-type-identifiers"
 
 const log = R.tap( console.log )
-log( 'lass mich in ruehe' )
+log( `using log so eslint doesn't complain` )
 
 const memo = R.memoize
 const nTest = $.test( [] )
@@ -39,7 +39,7 @@ export const createSumTypeFactory = options => {
            ( url )
            ( x =>
                isConstructed( x )
-               || false !== _firstMatchingCase( x )
+               || false !== _firstMatchingCase( cases )( x )
            )
 
     // PlaceholderType :: Type
@@ -47,6 +47,9 @@ export const createSumTypeFactory = options => {
       nType( `${ nameSpace }/${ name }._PlaceholderType` )
            ( url )
            ( _ => false )
+
+    // cases_ :: Array( Case )
+    const cases_ = R.reverse( cases )
 
     // _allCasesMap :: StrMap( Case )
     const _allCasesMap =
@@ -166,15 +169,17 @@ export const createSumTypeFactory = options => {
             R.curryN( _staticFnArity( fnName ) )
                     ( ( ...args ) =>
                        { const x = args[ typeArgIndex ]
+                         //INFERENCE
                          const kase =
-                           _firstMatchingCase( x )
+                           _firstMatchingCase( cases )( x )
                          const bareRes =
                            dispatchMap[ kase.tag ]( ...R.map( _getValue )( args ) )
                          return(
                            returnsOurType && isConstructed( x )
                              ? outputIsPlaceholderType
                                ? makeMember( bareRes, kase )
-                               : _toFirstMatch( bareRes )
+                               //INFERENCE
+                               : _toFirstMatch( cases )( bareRes )
                              : bareRes
                          )
                        }
@@ -270,7 +275,7 @@ export const createSumTypeFactory = options => {
 
     // _firstMatchingCase :: Any -> Object
     const _firstMatchingCase =
-      x =>
+      kases => x =>
         isConstructed( x )
           ? _allCasesMap[ x.tag ]
           : R.reduce( ( _, kase ) =>
@@ -280,21 +285,23 @@ export const createSumTypeFactory = options => {
                            : false
                    )
                    ( false )
-                   ( cases )
+                   ( kases )
 
     // toFirstMatch :: Any -> SumType
     const _toFirstMatch =
+      kases =>
       R.converge( makeMember )
-                ( [ _getValue, _firstMatchingCase ] )
+                ( [ _getValue, _firstMatchingCase( kases ) ] )
 
     // TODO need to throw own TypeError on non member input
     // _getTag :: Any -> string
     const _getTag =
-      R.ifElse( isConstructed )
-              ( x => x.tag )
-              ( o( x => x.tag )
-                 ( _firstMatchingCase )
-              )
+      kases =>
+        R.ifElse( isConstructed )
+                ( x => x.tag )
+                ( o( x => x.tag )
+                   ( _firstMatchingCase( kases ) )
+                )
 
     const _throwInvalidTagErr =
       ( tag, name ) =>
@@ -321,9 +328,11 @@ export const createSumTypeFactory = options => {
 
     return(
       { [ name + 'Type' ]: SumTypeType
-      , [ name ]: def( 'toFirstMatch', {}, [ $.Any, SumTypeType ], _toFirstMatch )
+      , [ name ]: def( 'toFirstMatch', {}, [ $.Any, SumTypeType ], _toFirstMatch( cases ) )
+      , [ name + '_' ]: def( 'toFirstMatch_', {}, [ $.Any, SumTypeType ], _toFirstMatch( cases_ ) )
       , value: _getValue
-      , tag: def( 'getTag', {}, [ $.Any, $.String ], _getTag )
+      , tag: def( 'getTag', {}, [ $.Any, $.String ], _getTag( cases ) )
+      , tag_: def( 'getTag_', {}, [ $.Any, $.String ], _getTag( cases_ ) )
       , tags: _dispatchTags
       , is
       , hasTags

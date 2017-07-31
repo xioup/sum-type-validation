@@ -289,6 +289,8 @@ describe( `Shape`, () => {
               it( `returns a Shape.CircleType with circle`, () =>
                 assert( $.test( [], Shape.CircleType, Shape.Shape( cWrapped ) ) )
               )
+              // TODO Think about this
+              // hmm, maybe this should be the correct type for a wrapped value
               describe( `Ambiguous Type`, () =>
                 {
                   it( `return has the first matching type (RectType) with square`, () =>
@@ -375,6 +377,109 @@ describe( `Shape`, () => {
             {
               it( `throws a TypeError with a non member input`, () =>
                 assert.throws( () => Shape.Shape( {} ), TypeError )
+              )
+            }
+          )
+        }
+      )
+      describe( `#Shape_()`, () =>
+        {
+          describe( `Wrapped Input`, () =>
+            {
+              it( `returns a Shape.ShapeType with member`, () =>
+                assert( $.test( [], Shape.ShapeType, Shape.Shape_( sWrapped ) ) )
+              )
+              describe( `Ambiguous Type`, () =>
+                {
+                  it( `return has the last matching type (SquareType) with 4x4 square`, () =>
+                    assert( $.test( [], Shape.SquareType, Shape.Shape_( sWrapped ) ) )
+                  )
+                  it( `return has the last matching type (SquareUnit5x5Type) with 5x5 square`, () =>
+                    assert( $.test( [], Shape.SquareUnit5x5Type, Shape.Shape_( s5x5Wrapped ) ) )
+                  )
+                }
+              )
+              describe( `Return Object Validity`, () =>
+                {
+                  it( `has #@@type === typeIdentifier`, () =>
+                    assert( Shape.Shape_( cWrapped )[ '@@type' ] === typeIdentifier )
+                  )
+                  it( `has #constructor R.equals SumTypeTypeRep`, () =>
+                    assert( R.equals( Shape.Shape_( cWrapped ).constructor, SumTypeTypeRep ) )
+                  )
+                  it( `has #isCircle === true`, () =>
+                    assert( Shape.Shape_( cWrapped ).isCircle === true )
+                  )
+                  it( `has #name === shapeName`, () =>
+                    assert( Shape.Shape_( cWrapped ).name === shapeName )
+                  )
+                  it( `has #tag === 'Circle'`, () =>
+                    assert( Shape.Shape_( cWrapped ).tag === 'Circle' )
+                  )
+                  it( `has #url === shapeUrl`, () =>
+                    assert( Shape.Shape_( cWrapped ).url === shapeUrl )
+                  )
+                  it( `has #value R.equals circle.value`, () =>
+                    assert( R.equals( Shape.Shape_( cWrapped ).value, cWrapped.value ) )
+                  )
+                  it( `has #value !== circle.value`, () =>
+                    assert( Shape.Shape_( cWrapped ).value !== cWrapped.value )
+                  )
+                }
+              )
+            }
+          )
+          describe( `Bare Member Input`, () =>
+            {
+              it( `returns a Shape.ShapeType with member`, () =>
+                assert( $.test( [], Shape.ShapeType, Shape.Shape_( cBare ) ) )
+              )
+              describe( `Ambiguous Type`, () =>
+                {
+                {
+                  it( `return has the last matching type (SquareType) with 4x4 square`, () =>
+                    assert( $.test( [], Shape.SquareType, Shape.Shape_( sBare ) ) )
+                  )
+                  it( `return has the last matching type (SquareUnit5x5Type) with 5x5 square`, () =>
+                    assert( $.test( [], Shape.SquareUnit5x5Type, Shape.Shape_( s5x5Bare ) ) )
+                  )
+                }
+                }
+              )
+              describe( `Return Object Validity`, () =>
+                {
+                  it( `has #@@type === typeIdentifier`, () =>
+                    assert( Shape.Shape_( cBare )[ '@@type' ] === typeIdentifier )
+                  )
+                  it( `has #constructor R.equals SumTypeTypeRep`, () =>
+                    assert( R.equals( Shape.Shape_( cBare ).constructor, SumTypeTypeRep ) )
+                  )
+                  it( `has #isCircle === true`, () =>
+                    assert( Shape.Shape_( cBare ).isCircle === true )
+                  )
+                  it( `has #name === shapeName`, () =>
+                    assert( Shape.Shape_( cBare ).name === shapeName )
+                  )
+                  it( `has #tag === 'Circle'`, () =>
+                    assert( Shape.Shape_( cBare ).tag === 'Circle' )
+                  )
+                  it( `has #url === shapeUrl`, () =>
+                    assert( Shape.Shape_( cBare ).url === shapeUrl )
+                  )
+                  it( `has #value R.equals circle`, () =>
+                    assert( R.equals( Shape.Shape_( cBare ).value, cBare ) )
+                  )
+                  it( `has #value !== circle`, () =>
+                    assert( Shape.Shape_( cBare ).value !== cBare )
+                  )
+                }
+              )
+            }
+          )
+          describe( `Non Member`, () =>
+            {
+              it( `throws a TypeError with a non member input`, () =>
+                assert.throws( () => Shape.Shape_( {} ), TypeError )
               )
             }
           )
@@ -803,32 +908,32 @@ describe( `Shape`, () => {
         {
           describe( `Wrapped Input`, () =>
             {
-              it( `equals 'Circle' for circle`, () =>
+              it( `circle tag is 'Circle'`, () =>
                 assert.equal( 'Circle', Shape.tag( cWrapped ) )
               )
-              it( `equals 'Rect' for rect`, () =>
+              it( `rect tag is Rect`, () =>
                 assert.equal( 'Rect', Shape.tag( rWrapped ) )
               )
-              it( `equals 'Square' for square`, () =>
+              it( `square tag is Square`, () =>
                 assert.equal( 'Square', Shape.tag( sWrapped ) )
               )
-              it( `equals 'SquareUnit5x5' for 5x5 square`, () =>
+              it( `5x5 square tag is SquareUnit5x5`, () =>
                 assert.equal( 'SquareUnit5x5', Shape.tag( s5x5Wrapped ) )
               )
             }
           )
           describe( `Bare Member Input`, () =>
             {
-              it( `equals 'Circle' for circle`, () =>
+              it( `circle tag is 'Circle'`, () =>
                 assert.equal( 'Circle', Shape.tag( cBare ) )
               )
-              it( `equals 'Rect' for rect`, () =>
+              it( `rect tag is Rect`, () =>
                 assert.equal( 'Rect', Shape.tag( rBare ) )
               )
-              it( `equals 'Rect' for square`, () =>
+              it( `square tag is Rect`, () =>
                 assert.equal( 'Rect', Shape.tag( sBare ) )
               )
-              it( `equals 'Rect' for 5x5 square`, () =>
+              it( `5x5 square tag is Rect`, () =>
                 assert.equal( 'Rect', Shape.tag( s5x5Bare ) )
               )
             }
@@ -838,6 +943,50 @@ describe( `Shape`, () => {
               // TODO borrowing sanctuary-def's TypeError here. Need to replace it with our own.
               it( `throws a TypeError for non member`, () =>
                 assert.throws( _ => Shape.tag( {} ), TypeError )
+              )
+            }
+          )
+        }
+      )
+      describe( `#tag_()`, () =>
+        {
+          describe( `Wrapped Input`, () =>
+            {
+              it( `circle tag is 'Circle'`, () =>
+                assert.equal( 'Circle', Shape.tag_( cWrapped ) )
+              )
+              it( `rect tag is Rect`, () =>
+                assert.equal( 'Rect', Shape.tag_( rWrapped ) )
+              )
+              it( `square tag is Square`, () =>
+                assert.equal( 'Square', Shape.tag_( sWrapped ) )
+              )
+              it( `5x5 square tag is SquareUnit5x5`, () =>
+                assert.equal( 'SquareUnit5x5', Shape.tag_( s5x5Wrapped ) )
+              )
+            }
+          )
+          describe( `Bare Member Input`, () =>
+            {
+              it( `circle tag is 'Circle'`, () =>
+                assert.equal( 'Circle', Shape.tag_( cBare ) )
+              )
+              it( `rect tag is Rect`, () =>
+                assert.equal( 'Rect', Shape.tag_( rBare ) )
+              )
+              it( `4x4 square tag is Square`, () =>
+                assert.equal( 'Square', Shape.tag_( sBare ) )
+              )
+              it( `5x5 square tag is SquareUnit5x5`, () =>
+                assert.equal( 'SquareUnit5x5', Shape.tag_( s5x5Bare ) )
+              )
+            }
+          )
+          describe( `Non Member`, () =>
+            {
+              // TODO borrowing sanctuary-def's TypeError here. Need to replace it with our own.
+              it( `throws a TypeError for non member`, () =>
+                assert.throws( _ => Shape.tag_( {} ), TypeError )
               )
             }
           )
@@ -990,8 +1139,8 @@ describe( `Shape`, () => {
               it( `#value#origin == [ 1, 1 ] for square`, () =>
                 assert.deepEqual( [ 1, 1 ], Shape.move( [ 1, 1 ], sWrapped ).value.origin )
               )
-              // we can't 'move' a wrapped Unit Type because the return will not match the unit
-              //TODO: think about how this should work
+              // we can't 'move' a wrapped Unit Type when the output is a PlaceholderType
+              // because the return value will not match the input's Type
               it( `throws a TypeError for Unit type (5x5 square)`, () =>
                 assert.throws( _ => Shape.move( [ 1, 1 ], s5x5Wrapped ), TypeError )
               )
@@ -1037,8 +1186,8 @@ describe( `Shape`, () => {
                   it( `#value#origin == [ 1, 1 ] for square`, () =>
                     assert.deepEqual( [ 1, 1 ], Shape.move2( 1, 1, sWrapped ).value.origin )
                   )
-                  // we can't 'move' a wrapped Unit Type because the return will not match the unit
-                  //TODO: think about how this should work
+                  // we can't 'move' a wrapped Unit Type when the output is a PlaceholderType
+                  // because the return value will not match the input's Type
                   it( `throws a TypeError for Unit type (5x5 square)`, () =>
                     assert.throws( _ => Shape.move2( 1, 1, s5x5Wrapped ), TypeError )
                   )
@@ -1082,8 +1231,8 @@ describe( `Shape`, () => {
                   it( `#value#origin == [ 1, 1 ] for square`, () =>
                     assert.deepEqual( [ 1, 1 ], Shape.move2( 1 )( 1 )( sWrapped ).value.origin )
                   )
-                  // we can't 'move' a wrapped Unit Type because the return will not match the unit
-                  //TODO: think about how this should work
+                  // we can't 'move' a wrapped Unit Type when the output is a PlaceholderType
+                  // because the return value will not match the input's Type
                   it( `throws a TypeError for Unit type (5x5 square)`, () =>
                     assert.throws( _ => Shape.move2( 1 )( 1 )( s5x5Wrapped ), TypeError )
                   )

@@ -30,6 +30,7 @@ import pluck          from "ramda/src/pluck"
 import prop           from "ramda/src/prop"
 import reduce         from "ramda/src/reduce"
 import reduced        from "ramda/src/reduced"
+import reverse        from "ramda/src/reverse"
 import tap            from "ramda/src/tap"
 import toPairs        from "ramda/src/toPairs"
 import uniq           from "ramda/src/uniq"
@@ -70,6 +71,7 @@ export default
   , prop
   , reduce
   , reduced
+  , reverse
   , tap
   , toPairs
   , uniq
