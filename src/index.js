@@ -169,7 +169,7 @@ export const createSumTypeFactory = options => {
                                 ( fn )
                            ]
                          // we're not checking types, return the raw function
-                         : fn
+                         : [ tag, fn ]
                        : _throwMissingFunctionErr( fnName, tag )
                    )
                  }
