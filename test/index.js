@@ -1407,6 +1407,234 @@ describe( `Shape`, () => {
   )
 })
 
+
+// 'Instance' methods
+describe( `Instances`, () =>
+{
+  describe( `Standard Methods`, () =>
+    {
+      describe( `#hasTags()`, () =>
+        {
+          it( `rect hasTags ['Rect']`, () =>
+            assert( rWrapped.hasTags( ['Rect'] ) )
+          )
+          it( `rect hasn't tags ['Square']`, () =>
+            assert( R.not( rWrapped.hasTags( ['Square'] ) ) )
+          )
+          it( `rect hasn't tags ['SquareUnit5x5']`, () =>
+            assert( R.not( rWrapped.hasTags( ['SquareUnit5x5'] ) ) )
+          )
+          it( `square hasTags ['Square', 'Rect']`, () =>
+            assert( sWrapped.hasTags( ['Square', 'Rect'] ) )
+          )
+          it( `4x4 square hasn't tags ['SquareUnit5x5']`, () =>
+            assert( R.not( sWrapped.hasTags( ['SquareUnit5x5'] ) ) )
+          )
+          it( `5x5 square hasTags ['SquareUnit5x5', 'Square', 'Rect']`, () =>
+            assert( s5x5Wrapped.hasTags( ['SquareUnit5x5', 'Square', 'Rect'] ) )
+          )
+        }
+      )
+      describe( `#is()`, () =>
+        {
+          it( `'Circle' matches a circle`, () =>
+            assert( cWrapped.is( `Circle` ) )
+          )
+          it( `'Circle' doesn't match a rect`, () =>
+            assert( R.not( rWrapped.is( `Circle` ) ) )
+          )
+          it( `'Rect' matches a rect`, () =>
+            assert( rWrapped.is( `Rect` ) )
+          )
+          describe( `Ambiguous Type`, () =>
+            {
+              it( `'Rect' matches a square`, () =>
+                assert( sWrapped.is( `Rect` ) )
+              )
+              it( `'Square' doesn't match a rect`, () =>
+                assert( R.not( rWrapped.is( `Square` ) ) )
+              )
+            }
+          )
+        }
+      )
+      describe( `#tags()`, () =>
+        {
+          it( `equals ['Circle'] for circle`, () =>
+            assert.deepEqual( ['Circle'], cWrapped.tags() )
+          )
+          it( `equals ['Rect'] for rect`, () =>
+            assert.deepEqual( ['Rect'], rWrapped.tags() )
+          )
+          it( `equals ['Rect', 'Square'] for square`, () =>
+            assert.deepEqual( ['Rect', 'Square'], sWrapped.tags() )
+          )
+          it( `equals ['Rect', 'Square', 'SquareUnit5x5'] for 5x5 square`, () =>
+            assert.deepEqual( ['Rect', 'Square', 'SquareUnit5x5'], s5x5Wrapped.tags() )
+          )
+        }
+      )
+      describe( `#value()`, () =>
+        {
+          it( `equals circle#value for circle`, () =>
+            assert.deepEqual( cWrapped.value, cWrapped.value )
+          )
+          it( `equals rect#value for rect`, () =>
+            assert.deepEqual( rWrapped.value, rWrapped.value )
+          )
+          it( `equals square#value for square`, () =>
+            assert.deepEqual( sWrapped.value, sWrapped.value )
+          )
+          it( `equals 5x5 square#value for 5x5 square`, () =>
+            assert.deepEqual( s5x5Wrapped.value, s5x5Wrapped.value )
+          )
+        }
+      )
+    }
+  )
+  describe( `User-Defined Methods`, () =>
+    {
+      describe( `#area()`, () =>
+        {
+          it( `equals 24 for rect`, () =>
+            assert.equal( 20, rWrapped.area(  ) )
+          )
+          it( `equals 78.53981633974483 for circle`, () =>
+            assert.equal( 78.53981633974483, cWrapped.area(  ) )
+          )
+          it( `equals 24 for square`, () =>
+            assert.equal( 16, sWrapped.area(  ) )
+          )
+          it( `equals 24 for 5x5 square`, () =>
+            assert.equal( 25, s5x5Wrapped.area(  ) )
+          )
+        }
+      )
+      describe( `#move( [ 1, 1 ] )`, () =>
+        {
+          it( `#value#origin == [ 1, 1 ] for rect`, () =>
+            assert.deepEqual( [ 1, 1 ], rWrapped.move( [ 1, 1 ] ).value.origin )
+          )
+          it( `#value#origin == [ 1, 1 ] for circle`, () =>
+            assert.deepEqual( [ 1, 1 ], cWrapped.move( [ 1, 1 ] ).value.origin )
+          )
+          it( `#value#origin == [ 1, 1 ] for square`, () =>
+            assert.deepEqual( [ 1, 1 ], sWrapped.move( [ 1, 1 ] ).value.origin )
+          )
+          // we can't 'move' a wrapped Unit Type when the output is a PlaceholderType
+          // because the return value will not match the input's Type
+          it( `throws a TypeError for Unit type (5x5 square)`, () =>
+            assert.throws( _ => s5x5Wrapped.move( [ 1, 1 ] ), TypeError )
+          )
+        }
+      )
+      describe( `#move2() - Output is Placeholder Type`, () =>
+        {
+          describe( `Total Application`, () =>
+            {
+              it( `#value#origin == [ 1, 1 ] for rect`, () =>
+                assert.deepEqual( [ 1, 1 ], rWrapped.move2( 1, 1 ).value.origin )
+              )
+              it( `#value#origin == [ 1, 1 ] for circle`, () =>
+                assert.deepEqual( [ 1, 1 ], cWrapped.move2( 1, 1 ).value.origin )
+              )
+              it( `#value#origin == [ 1, 1 ] for square`, () =>
+                assert.deepEqual( [ 1, 1 ], sWrapped.move2( 1, 1 ).value.origin )
+              )
+              // we can't 'move' a wrapped Unit Type when the output is a PlaceholderType
+              // because the return value will not match the input's Type
+              it( `throws a TypeError for Unit type (5x5 square)`, () =>
+                assert.throws( _ => s5x5Wrapped.move2( 1, 1 ), TypeError )
+              )
+            }
+          )
+          describe( `Partial Application`, () =>
+            {
+              it( `#value#origin == [ 1, 1 ] for rect`, () =>
+                assert.deepEqual( [ 1, 1 ], rWrapped.move2( 1 )( 1 ).value.origin )
+              )
+              it( `#value#origin == [ 1, 1 ] for circle`, () =>
+                assert.deepEqual( [ 1, 1 ], cWrapped.move2( 1 )( 1 ).value.origin )
+              )
+              it( `#value#origin == [ 1, 1 ] for square`, () =>
+                assert.deepEqual( [ 1, 1 ], sWrapped.move2( 1 )( 1 ).value.origin )
+              )
+              // we can't 'move' a wrapped Unit Type when the output is a PlaceholderType
+              // because the return value will not match the input's Type
+              it( `throws a TypeError for Unit type (5x5 square)`, () =>
+                assert.throws( _ => s5x5Wrapped.move2( 1 )( 1 ), TypeError )
+              )
+            }
+          )
+        }
+      )
+      describe( `#wrongType() - Output is Placeholder Type`, () =>
+        {
+          it( `throws a TypeError for circle`, () =>
+            assert.throws( _ => cWrapped.wrongType(), TypeError )
+          )
+          it( `throws a TypeError for rect`, () =>
+            assert.throws( _ => rWrapped.wrongType(), TypeError )
+          )
+          it( `throws a TypeError for square`, () =>
+            assert.throws( _ => sWrapped.wrongType(), TypeError )
+          )
+          it( `throws a TypeError for 5x5 square`, () =>
+            assert.throws( _ => s5x5Wrapped.wrongType(), TypeError )
+          )
+        }
+      )
+      describe( `#move3() - Output is Sum Type`, () =>
+        {
+          describe( `Total Application`, () =>
+            {
+              it( `#value#origin == [ 1, 1 ] for 5x5 square`, () =>
+                assert.deepEqual( [ 1, 1 ], Shape2.SquareUnit5x5( s5x5Bare ).move3( 1, 1 ).value.origin )
+              )
+              it( `#tag == 'Rect' for 5x5 square`, () =>
+                assert.equal( 'Rect', Shape2.SquareUnit5x5( s5x5Bare ).move3( 1, 1 ).tag )
+              )
+            }
+          )
+          describe( `Partial Application`, () =>
+            {
+              it( `#value#origin == [ 1, 1 ] for 5x5 square`, () =>
+                assert.deepEqual( [ 1, 1 ], Shape2.SquareUnit5x5( s5x5Bare ).move3( 1 )( 1 ).value.origin )
+              )
+              it( `#tag == 'Rect' for 5x5 square`, () =>
+                assert.equal( 'Rect', Shape2.SquareUnit5x5( s5x5Bare ).move3( 1 )( 1 ).tag )
+              )
+            }
+          )
+        }
+      )
+      describe( `#changeType() - Output is Sum Type`, () =>
+        {
+          it( `circle to rect`, () =>
+            assert.equal( 'Rect', Shape2.Circle( cBare ).changeType().tag )
+          )
+          it( `rect to circle`, () =>
+            assert.equal( 'Circle', Shape2.Rect( rBare ).changeType().tag )
+          )
+          it( `5x5 square to 4x4 square (rect)`, () =>
+            assert.equal( 'Rect', Shape2.SquareUnit5x5( s5x5Bare ).changeType().tag )
+          )
+        }
+      )
+      describe( `#toCircle() - Output is Explicit Type`, () =>
+        {
+          it( `#value#radius == 5 for 5x5 square`, () =>
+            assert.equal( 5, Shape3.SquareUnit5x5( s5x5Bare ).toCircle().value.radius )
+          )
+          it( `#tag == 'Circle' for 5x5 square`, () =>
+            assert.equal( 'Circle', Shape3.SquareUnit5x5( s5x5Bare ).toCircle().tag )
+          )
+        }
+      )
+    }
+  )
+})
+
 const Offer =
   SumType( `Offer`
          , 1
