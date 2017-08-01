@@ -11,7 +11,7 @@ With this library, the developer should be able to replicate all of the features
 
 Unlike most other sum type libraries, this library allows the developer to work with both wrapped and bare values, as well as with complex and simple data types.
 
-## Examples
+## Examples and API
 Import sanctuary-def and the factory factory and initialize it:
 
 ```JavaScript
@@ -38,6 +38,7 @@ const Shape =
            ]
          , {}
          )
+         
 // some convenience objects for reuse in the following examples:
 const bareCircle = { origin: [ 0, 0 ], radius: 5 }
 const bareRect = { origin: [ 0, 0 ], sides: [ 4, 5 ] }
@@ -55,7 +56,7 @@ const oops = Shape.Rect( bareCircle )
 ```
 
 ### `#Shape()` (generic constructor)
-Like `tag`, tests the argument against each case, starting with the **first** and short-circuiting as soon as a match is found.
+Like `tag`, tests a bare value against each case, starting with the **first** and short-circuiting as soon as a match is found. When called with a wrapped value, the generic constructor immediately returns an identical copy of the supplied argument.
 ```JavaScript
 Shape.Shape( bareCircle )
 //-> wrapped value with #tag='Circle', #isCircle=true and #value=bareCircle
@@ -65,13 +66,13 @@ Shape.Shape( bareTriangle )
 //-> TypeError -- bareTriangle doesn't match any of our cases
 ```
 ### `#Shape_()` (alternate generic constructor)
-Like `tag_`, tests the argument against each case, starting with the **last** and short-circuiting as soon as a match is found.
+Like `tag_`, tests a bare value against each case, starting with the **last** and short-circuiting as soon as a match is found. When called with a wrapped value, the generic constructor immediately returns an identical copy of the supplied argument.
 
 ### `#ShapeType`, `#CircleType`, `#RectType` (valid sanctuary-def types)
 These have all of the requisite functionality you'd expect from sanctuary-def types.
 
 ### `#hasTags()`
-Reports whether a value (bare or wrapped) has or could have all of the specified tags). Like `is` but for multiple tags.
+Reports whether a value (bare or wrapped) has or could have all of the specified tags. Like `is` but for multiple tags.
 ```JavaScript
 Shape.hasTags( [ 'Circle' ], wrappedCircle )
 //-> true -- wrappedCircle matches the 'Circle' case
@@ -83,10 +84,10 @@ Shape.hasTags( [ 'Rect' ], bareTriangle )
 //-> false -- bareTriangle doesn't match the 'Rect' case
 ```
 ### `#is()`
-Reports whether a value (bare or wrapped) has or could have the specified tag). Like `hasTags` but for a single tag.
+Reports whether a value (bare or wrapped) has or could have the specified tag. Like `hasTags` but for a single tag.
 
 ### `#tag()`
-Reports the tag a wrapped value has or a bare value would be given. Like `Shape`, tests the argument against each case, starting with the **first** and short-circuiting as soon as a match is found.
+Reports the tag a wrapped value has or a bare value would be given. Like `Shape`, tests a bare value against each case, starting with the **first** and short-circuiting as soon as a match is found.
 ```JavaScript
 Shape.tag( wrappedCircle )
 //-> 'Circle'
@@ -98,7 +99,7 @@ Shape.tag( bareTriangle )
 //-> null -- bareTriangle doesn't match any case
 ```
 ### `#tag_()` 
-Reports the tag a wrapped value has or a bare value would be given. Like `Shape_`, tests the argument against each case, starting with the **last** and short-circuiting as soon as a match is found.
+Reports the tag a wrapped value has or a bare value would be given. Like `Shape_`, tests a bare value against each case, starting with the **last** and short-circuiting as soon as a match is found.
 ### `#value()`
 Returns the bare value of a wrapped or bare value.
 ```JavaScript
