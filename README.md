@@ -5,11 +5,23 @@ Powerful, flexible, functional sum type / union type / ADT library with a focus 
 I'll add this to npm as soon as I get the packaging worked out.
 
 ## Maximum Functionality, Maximum Flexibility
-Each of the JavaScript sum type / union type libraries I've researched, and there are a few, offer APIs that fundamentally limit the power and/or flexibility they **can** offer the developer. That's not necessarily a bad thing. If one of the other libraries ([see list](#other_libraries)) does everything you need (and everything you might ever need in the future), and does it well, this particular library may be overkill.
+Each of the JavaScript sum type / union type libraries I've researched, and there are a few, offer APIs that fundamentally limit the power and/or flexibility they **can** offer the developer. That's not necessarily a bad thing. If one of the other libraries ([see list](#other_libraries)) does everything you need (and everything you might ever need in the future), and does those things well, this particular library may be overkill.
 
-With this library, the developer should be able to replicate all of the features of the others while offering (optionally) a significant amount of additional functionality and flexibility.
+On the other hand, if you find yourself looking for more power and flexibility from your JavaScript sum type library, this one may be just what the doctor ordered.
+ 
+ In short, with this library, the developer should be able easily to replicate all of the features of the others, while having the option of making use of significant additional functionality, should they so choose.
 
-Unlike most other sum type libraries, this library allows the developer to work with both wrapped and bare values, as well as with complex and simple data types.
+### Functionality
+
+
+### Flexibiliity
+Unlike most other sum type libraries, this library allows the developer to work in a variety of ways and with practically no restrictions on data:
+
+1. Work with a combination of constructed and bare values.
+2. Incorporate complex and simple data types into sum types.
+3. Supports fluent (with constructed values) and non fluent (with constructed and bare values) coding styles.
+4. Offers mostly static methods with 'faked' instance methods added to constructed values.
+5. Offers three ways to define case types: with any valid sanctuary-def type, with a predicate function or with a fixed value.
 
 ## Examples and API
 Import sanctuary-def and the factory factory and initialize it:
@@ -22,13 +34,13 @@ const SumType = createSumTypeFactory( { checkTypes: true, env: $.env } )
 Create a simple `Shape` sum type with two cases, `Circle` and `Rect`.
 
 ```JavaScript
-const Point = $.Pair( $.ValidNumber ) // Point type to help keep it DRY
-
+// Point type to help keep things DRY
+const Point = $.Pair( $.ValidNumber )
 // SumType( name, version, documentationUrl, cases, functionTypeSignatures )
 const Shape = 
   SumType( 'Shape'
          , 1
-         , 'http://docs'
+         , ''
          , [ { tag: 'Circle'
              , type: $.RecordType( { origin: Point, radius: $.ValidNumber } )
              }
@@ -56,7 +68,7 @@ const oops = Shape.Rect( bareCircle )
 ```
 
 ### `#Shape()` (generic constructor)
-Like `tag`, tests a bare value against each case, starting with the **first** and short-circuiting as soon as a match is found. When called with a wrapped value, the generic constructor immediately returns an identical copy of the supplied argument.
+Like `tag`, tests a bare value against each case, starting with the **first case** and short-circuiting as soon as a match is found. When called with a wrapped value, the generic constructor immediately returns an identical copy of the supplied argument.
 ```JavaScript
 Shape.Shape( bareCircle )
 //-> wrapped value with #tag='Circle', #isCircle=true and #value=bareCircle
@@ -66,7 +78,7 @@ Shape.Shape( bareTriangle )
 //-> TypeError -- bareTriangle doesn't match any of our cases
 ```
 ### `#Shape_()` (alternate generic constructor)
-Like `tag_`, tests a bare value against each case, starting with the **last** and short-circuiting as soon as a match is found. When called with a wrapped value, the generic constructor immediately returns an identical copy of the supplied argument.
+Like `tag_`, tests a bare value against each case, starting with the **last case** and short-circuiting as soon as a match is found. When called with a wrapped value, the generic constructor immediately returns an identical copy of the supplied argument.
 
 ### `#ShapeType`, `#CircleType`, `#RectType` (valid sanctuary-def types)
 These have all of the requisite functionality you'd expect from sanctuary-def types.
@@ -87,7 +99,7 @@ Shape.hasTags( [ 'Rect' ], bareTriangle )
 Reports whether a value (bare or wrapped) has or could have the specified tag. Like `hasTags` but for a single tag.
 
 ### `#tag()`
-Reports the tag a wrapped value has or a bare value would be given. Like `Shape`, tests a bare value against each case, starting with the **first** and short-circuiting as soon as a match is found.
+Reports the tag a wrapped value has or a bare value would be given. Like `Shape`, tests a bare value against each case, starting with the **first case** and short-circuiting as soon as a match is found.
 ```JavaScript
 Shape.tag( wrappedCircle )
 //-> 'Circle'
@@ -99,7 +111,7 @@ Shape.tag( bareTriangle )
 //-> null -- bareTriangle doesn't match any case
 ```
 ### `#tag_()` 
-Reports the tag a wrapped value has or a bare value would be given. Like `Shape_`, tests a bare value against each case, starting with the **last** and short-circuiting as soon as a match is found.
+Reports the tag a wrapped value has or a bare value would be given. Like `Shape_`, tests a bare value against each case, starting with the **last case** and short-circuiting as soon as a match is found.
 ### `#value()`
 Returns the bare value of a wrapped or bare value.
 ```JavaScript

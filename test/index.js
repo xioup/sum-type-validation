@@ -1093,13 +1093,15 @@ describe( `Shape`, () => {
               )
             }
           )
-          describe( `Non Member`, () =>
-            {
-              it( `equals input for non member`, () =>
-                assert.deepEqual( {}, Shape.value( {} ) )
-              )
-            }
-          )
+          if( opts.checkTypes ) {
+            describe( `Non Member`, () =>
+              {
+                it( `throws a TypeError for non member`, () =>
+                  assert.throws( _ => Shape.value( {} ), TypeError )
+                )
+              }
+            )
+          }
         }
       )
     }
