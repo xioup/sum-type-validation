@@ -92,7 +92,7 @@ export const createSumTypeFactory = options => {
 
     // SumTypeType :: Type
     const SumTypeType =
-      nType( `${ nameSpace }/${ name }.${ name }` )
+      nType( `${ nameSpace }/${ name }` )
            ( url )
            ( o( isDefined )
               ( _firstMatchingCase( cases ) )
@@ -100,7 +100,7 @@ export const createSumTypeFactory = options => {
 
     // PlaceholderType :: Type
     const PlaceholderType =
-      nType( `${ nameSpace }/${ name }._PlaceholderType` )
+      nType( `${ nameSpace }/_PlaceholderType` )
            ( url )
            ( _ => false )
 
@@ -171,7 +171,7 @@ export const createSumTypeFactory = options => {
                        ? checkTypes
                          // we're checking types - return defined function
                          ? [ tag
-                           , def( fnName )
+                           , def( `${ tag }.${ fnName }` )
                                 ( {} )
                                 ( map( when( R.equals( PlaceholderType ) )
                                            ( _ => _allCasesTypesMap[ tag ] )
@@ -318,12 +318,13 @@ export const createSumTypeFactory = options => {
           // Mutation ahead!
           _sharedFns.forEach(
             ( [ name, fn, arity ] ) =>
-              r[ name ] =
-                arity < 2
-                  ? memo( ( ...ys ) => fn( ...R.append( r, ys ) ) )
-                  : R.curryN( arity
-                            , memo( ( ...ys ) => fn( ...R.append( r, ys ) ) )
-                            )
+              { r[ name ] =
+                  arity < 2
+                    ? ( ...ys ) => fn( ...R.append( r, ys ) )
+                    : R.curryN( arity
+                              , ( ...ys ) => fn( ...R.append( r, ys ) )
+                              )
+              }
           )
           return r
         }
@@ -375,14 +376,14 @@ export const createSumTypeFactory = options => {
 
     return(
       { [ name + 'Type' ]: SumTypeType
-      , [ name ]: def( 'toFirstMatch', {}, [ $.Any, SumTypeType ], _toFirstMatch( cases ) )
-      , [ name + '_' ]: def( 'toFirstMatch_', {}, [ $.Any, SumTypeType ], _toFirstMatch( cases_ ) )
-      , value: _getValue
+      , [ name ]: def( name, {}, [ SumTypeType, SumTypeType ], _toFirstMatch( cases ) )
+      , [ name + '_' ]: def( name + '_', {}, [ SumTypeType, SumTypeType ], _toFirstMatch( cases_ ) )
+      , value: def( 'value', {}, [ SumTypeType, SumTypeType ], _getValue )
       , tag: def( 'getTag', {}, [ $.Any, $.Nullable( $.String ) ], _getTag( cases ) )
       , tag_: def( 'getTag_', {}, [ $.Any, $.Nullable( $.String ) ], _getTag( cases_ ) )
-      , tags: _dispatchTags
-      , is
-      , hasTags
+      , tags: def( 'tags', {}, [ $.Any, $.Array( $.Nullable( $.String ) ) ], _dispatchTags )
+      , is: def( 'is', {}, [ $.String, $.Any, $.Boolean ], is )
+      , hasTags: def( 'hasTags', {}, [ $.Array( $.String ), $.Any, $.Boolean ], hasTags )
         // caseFns :: StrMap( Function )
       , ...R.fromPairs( _sharedFns )
         // caseTypes :: StrMap( Type )
