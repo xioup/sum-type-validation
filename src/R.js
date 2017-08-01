@@ -1,4 +1,3 @@
-
 import ap             from "ramda/src/ap"
 import append         from "ramda/src/append"
 import assoc          from "ramda/src/assoc"
@@ -17,20 +16,20 @@ import fromPairs      from "ramda/src/fromPairs"
 import ifElse         from "ramda/src/ifElse"
 import init           from "ramda/src/init"
 import is             from "ramda/src/is"
-import keys           from "ramda/src/keys"
+//import keys           from "ramda/src/keys"
 import last           from "ramda/src/last"
 import lensIndex      from "ramda/src/lensIndex"
 import map            from "ramda/src/map"
 import memoize        from "ramda/src/memoize"
 import merge          from "ramda/src/merge"
-import of             from "ramda/src/of"
+//import of             from "ramda/src/of"
 import over           from "ramda/src/over"
 import path           from "ramda/src/path"
 import pluck          from "ramda/src/pluck"
-import prop           from "ramda/src/prop"
+//import prop           from "ramda/src/prop"
 import reduce         from "ramda/src/reduce"
 import reduced        from "ramda/src/reduced"
-import reverse        from "ramda/src/reverse"
+//import reverse        from "ramda/src/reverse"
 import tap            from "ramda/src/tap"
 import toPairs        from "ramda/src/toPairs"
 import uniq           from "ramda/src/uniq"
@@ -58,20 +57,20 @@ export default
   , ifElse
   , init
   , is
-  , keys
+//  , keys
   , last
   , lensIndex
   , map
   , memoize
   , merge
-  , of
+//  , of
   , over
   , path
   , pluck
-  , prop
+//  , prop
   , reduce
   , reduced
-  , reverse
+//  , reverse
   , tap
   , toPairs
   , uniq
