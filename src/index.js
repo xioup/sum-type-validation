@@ -13,8 +13,41 @@ const contains_ = R.flip( R.contains )
 const concat_ = R.flip( R.concat )
 const W = f => x => f( x )( x )
 const pipe =
-  fns => data =>
-    fns.reduce( ( acc, fn ) => fn( acc ), data )
+  fns => x =>
+    fns.reduce( ( acc, fn ) => fn( acc ), x )
+const reverse =
+  xs => xs.slice().reverse()
+const prop =
+  p => x => x[ p ]
+const toUnary =
+  fn => x => fn( x )
+const map =
+  fn => xs => xs.map( toUnary( fn ) )
+const ifte =
+  ifFn => tFn => eFn => x =>
+    ifFn( x )
+      ? tFn( x )
+      : eFn( x )
+//const isUndefined =
+//  x => typeof x === 'undefined'
+const isDefined =
+  x => typeof x !== 'undefined'
+/*
+const isNull =
+  x => x === null
+  */
+const isNil =
+  x => x == null
+//const isNotNil =
+//  x => x != null
+const id =
+  x => x
+const keys =
+  ifte( isNil )
+      ( _ => [] )
+      ( Object.keys )
+const of =
+  x => [ x ]
 
 export const createSumTypeFactory = options => {
   const def = $.create( options )
@@ -31,15 +64,26 @@ export const createSumTypeFactory = options => {
     const SumTypeTypeRep = { '@@type': typeIdentifier }
 
     const isConstructed =
-        x => typeIdentifier === type( x )
+      o( R.equals( typeIdentifier ) )
+       ( type )
+
+    // _firstMatchingCase :: Any -> Object
+    const _firstMatchingCase =
+      kases => x =>
+        isConstructed( x )
+          ? _allCasesMap[ x.tag ]
+          : R.find( kase =>
+                      nTest( _allCasesTypesMap[ kase.tag ] )
+                           ( x )
+                   )
+                   ( kases )
 
     // SumTypeType :: Type
     const SumTypeType =
       nType( `${ nameSpace }/${ name }.${ name }` )
            ( url )
-           ( x =>
-               isConstructed( x )
-               || false !== _firstMatchingCase( cases )( x )
+           ( o( isDefined )
+              ( _firstMatchingCase( cases ) )
            )
 
     // PlaceholderType :: Type
@@ -49,7 +93,7 @@ export const createSumTypeFactory = options => {
            ( _ => false )
 
     // cases_ :: Array( Case )
-    const cases_ = R.reverse( cases )
+    const cases_ = reverse( cases )
 
     // _allCasesMap :: StrMap( Case )
     const _allCasesMap =
@@ -60,7 +104,7 @@ export const createSumTypeFactory = options => {
 
     // _allCasesTags :: Array( String )
     const _allCasesTags =
-      R.keys( _allCasesMap )
+      keys( _allCasesMap )
 
     // _allCasesTypesMap :: StrMap( Type )
     const _allCasesTypesMap =
@@ -91,8 +135,8 @@ export const createSumTypeFactory = options => {
     // _allFnNames :: Array( String )
     const _allFnNames =
       pipe( [ R.pluck( 'fns' )
-            , R.map( R.keys )
             , R.values
+            , map( keys )
             , R.flatten
             , R.uniq
             ]
@@ -106,31 +150,31 @@ export const createSumTypeFactory = options => {
     const _getFnDispatchMap =
       fnName => sig =>
         R.fromPairs(
-          R.map( tag =>
-                   { const fn =
-                       R.path( [ tag, 'fns', fnName ] )
-                             ( _allCasesMap )
-                     return(
-                       R.is( Function, fn )
-                         ? checkTypes
-                           // we're checking types - return defined function
-                           ? [ tag
-                             , def( fnName )
-                                  ( {} )
-                                  ( R.map( R.when( R.equals( PlaceholderType ) )
-                                                 ( _ => _allCasesTypesMap[ tag ] )
-                                         )
-                                         ( sig )
-                                  )
-                                  ( fn )
-                             ]
-                           // we're not checking types, return the raw function
-                           : fn
-                         : _throwMissingFunctionErr( fnName, tag )
-                     )
-                   }
-               )
-               ( _allCasesTags )
+          map( tag =>
+                 { const fn =
+                     R.path( [ tag, 'fns', fnName ] )
+                           ( _allCasesMap )
+                   return(
+                     R.is( Function, fn )
+                       ? checkTypes
+                         // we're checking types - return defined function
+                         ? [ tag
+                           , def( fnName )
+                                ( {} )
+                                ( map( R.when( R.equals( PlaceholderType ) )
+                                             ( _ => _allCasesTypesMap[ tag ] )
+                                     )
+                                     ( sig )
+                                )
+                                ( fn )
+                           ]
+                         // we're not checking types, return the raw function
+                         : fn
+                       : _throwMissingFunctionErr( fnName, tag )
+                   )
+                 }
+             )
+             ( _allCasesTags )
         )
 
     const _throwMissingSignatureErr =
@@ -140,8 +184,8 @@ export const createSumTypeFactory = options => {
     const _dispatchFn =
       fnName =>
         { const sigFn =
-            R.prop( fnName )
-                  ( fnSigs )
+            prop( fnName )
+                ( fnSigs )
           if ( typeof sigFn !== 'function' )
             _throwMissingSignatureErr( fnName, name )
           const sig = sigFn( _allTypesMap )
@@ -173,7 +217,7 @@ export const createSumTypeFactory = options => {
                          const kase =
                            _firstMatchingCase( cases )( x )
                          const bareRes =
-                           dispatchMap[ kase.tag ]( ...R.map( _getValue )( args ) )
+                           dispatchMap[ kase.tag ]( ...map( _getValue )( args ) )
                          return(
                            returnsOurType && isConstructed( x )
                              ? outputIsPlaceholderType
@@ -190,9 +234,9 @@ export const createSumTypeFactory = options => {
     // _fnSigLength :: String -> NonNegativeInteger
     const _fnSigLength =
       fnName =>
-        R.prop( fnName )
-              ( fnSigs )
-              ( _allTypesMap ).length
+        prop( fnName )
+            ( fnSigs )
+            ( _allTypesMap ).length
 
     // _staticFnArity :: String -> NonNegativeInteger
     const _staticFnArity =
@@ -204,20 +248,20 @@ export const createSumTypeFactory = options => {
 
     // _sharedFns :: Tuple( String, Fn, NonNegativeInteger )
     const _sharedFns =
-      R.map( o( R.ap( [ x => x
-                      , _dispatchFn
-                      , _instanceFnArity
-                      ]
-                    )
-              )
-              ( R.of )
-           )
-           ( _allFnNames )
+      map( o( R.ap( [ id
+                    , _dispatchFn
+                    , _instanceFnArity
+                    ]
+                  )
+            )
+            ( of )
+         )
+         ( _allFnNames )
 
     const _getValue =
-      R.ifElse( isConstructed )
-              ( x => x.value )
-              ( x => x )
+      ifte( isConstructed )
+          ( x => x.value )
+          ( id )
 
     // tags :: Any -> Array( String )
     // returns input's implicit tags
@@ -234,9 +278,9 @@ export const createSumTypeFactory = options => {
 
     // This lets us memoize calls to the tags 'instance' method
     const _dispatchTags =
-      R.ifElse( isConstructed )
-              ( x => x.tags( 0 ) )
-              ( tags )
+      ifte( isConstructed )
+          ( x => x.tags( 0 ) )
+          ( tags )
 
     // makeMember :: Any -> Case -> SumType
     const _makeMember =
@@ -273,20 +317,6 @@ export const createSumTypeFactory = options => {
         }
     const makeMember = def( 'makeMember', {}, [ SumTypeType, $.Object, SumTypeType ], _makeMember )
 
-    // _firstMatchingCase :: Any -> Object
-    const _firstMatchingCase =
-      kases => x =>
-        isConstructed( x )
-          ? _allCasesMap[ x.tag ]
-          : R.reduce( ( _, kase ) =>
-                        nTest( _allCasesTypesMap[ kase.tag ] )
-                             ( x )
-                           ? R.reduced( kase )
-                           : false
-                   )
-                   ( false )
-                   ( kases )
-
     // toFirstMatch :: Any -> SumType
     const _toFirstMatch =
       kases =>
@@ -297,11 +327,11 @@ export const createSumTypeFactory = options => {
     // _getTag :: Any -> string
     const _getTag =
       kases =>
-        R.ifElse( isConstructed )
-                ( x => x.tag )
-                ( o( x => x.tag )
-                   ( _firstMatchingCase( kases ) )
-                )
+        ifte( isConstructed )
+            ( x => x.tag )
+            ( o( x => x.tag )
+               ( _firstMatchingCase( kases ) )
+            )
 
     const _throwInvalidTagErr =
       ( tag, name ) =>
@@ -340,10 +370,9 @@ export const createSumTypeFactory = options => {
       , ...R.fromPairs( _sharedFns )
         // caseTypes :: StrMap( Type )
       , ...pipe( [ R.toPairs
-                 , R.map( R.over( R.lensIndex( 0 )
-                                , concat_( 'Type' )
-                                )
-                        )
+                 , map( R.over( R.lensIndex( 0 ) )
+                              ( concat_( 'Type' ) )
+                      )
                  , R.fromPairs
                  ]
                )
