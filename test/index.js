@@ -289,10 +289,9 @@ describe( `Shape`, () => {
               it( `returns a Shape.CircleType with circle`, () =>
                 assert( $.test( [], Shape.CircleType, Shape.Shape( cWrapped ) ) )
               )
-              // TODO Think about this
-              // hmm, maybe this should be the correct type for a wrapped value
               describe( `Ambiguous Type`, () =>
                 {
+                  // Seems weird but is correct
                   it( `return has the first matching type (RectType) with square`, () =>
                     assert( $.test( [], Shape.RectType, Shape.Shape( sWrapped ) ) )
                   )
@@ -1409,9 +1408,9 @@ describe( `Shape`, () => {
 
 
 // 'Instance' methods
-describe( `Instances`, () =>
+describe( `Instance Methods`, () =>
 {
-  describe( `Standard Methods`, () =>
+  describe( `Standard`, () =>
     {
       describe( `#hasTags()`, () =>
         {
@@ -1492,7 +1491,7 @@ describe( `Instances`, () =>
       )
     }
   )
-  describe( `User-Defined Methods`, () =>
+  describe( `User-Defined`, () =>
     {
       describe( `#area()`, () =>
         {
@@ -1514,6 +1513,15 @@ describe( `Instances`, () =>
         {
           it( `#value#origin == [ 1, 1 ] for rect`, () =>
             assert.deepEqual( [ 1, 1 ], rWrapped.move( [ 1, 1 ] ).value.origin )
+          )
+          it( `returns new object (doesn't mutate input)`, () =>
+            assert( R.not( R.equals( rWrapped.value, rWrapped.move( [ 1, 1 ] ).value ) ) )
+          )
+          it( `returns new object (doesn't mutate input)`, () =>
+            assert( rWrapped.value !== rWrapped.move( [ 0, 0 ] ).value )
+          )
+          it( `fluent style method chaining works`, () =>
+            assert.deepEqual( [ -3, 3 ], rWrapped.move( [ -1, 1 ] ).move( [ -1, 1 ] ).move( [ -1, 1 ] ).value.origin )
           )
           it( `#value#origin == [ 1, 1 ] for circle`, () =>
             assert.deepEqual( [ 1, 1 ], cWrapped.move( [ 1, 1 ] ).value.origin )
@@ -1550,13 +1558,22 @@ describe( `Instances`, () =>
           )
           describe( `Partial Application`, () =>
             {
-              it( `#value#origin == [ 1, 1 ] for rect`, () =>
+              it( `works (rect)`, () =>
                 assert.deepEqual( [ 1, 1 ], rWrapped.move2( 1 )( 1 ).value.origin )
               )
-              it( `#value#origin == [ 1, 1 ] for circle`, () =>
+              it( `returns new object (doesn't mutate input)`, () =>
+                assert( R.not( R.equals( rWrapped.value, rWrapped.move2( 1 )( 1 ).value ) ) )
+              )
+              it( `returns new object (doesn't mutate input)`, () =>
+                assert( rWrapped.value !== rWrapped.move2( 1 )( 1 ).value )
+              )
+              it( `fluent style method chaining works`, () =>
+                assert.deepEqual( [ -3, 3 ], rWrapped.move2( -1 )( 1 ).move2( -1 )( 1 ).move2( -1 )( 1 ).value.origin )
+              )
+              it( `works (circle)`, () =>
                 assert.deepEqual( [ 1, 1 ], cWrapped.move2( 1 )( 1 ).value.origin )
               )
-              it( `#value#origin == [ 1, 1 ] for square`, () =>
+              it( `works (square)`, () =>
                 assert.deepEqual( [ 1, 1 ], sWrapped.move2( 1 )( 1 ).value.origin )
               )
               // we can't 'move' a wrapped Unit Type when the output is a PlaceholderType
@@ -1601,6 +1618,7 @@ describe( `Instances`, () =>
               it( `#value#origin == [ 1, 1 ] for 5x5 square`, () =>
                 assert.deepEqual( [ 1, 1 ], Shape2.SquareUnit5x5( s5x5Bare ).move3( 1 )( 1 ).value.origin )
               )
+              // Seems weird but is correct
               it( `#tag == 'Rect' for 5x5 square`, () =>
                 assert.equal( 'Rect', Shape2.SquareUnit5x5( s5x5Bare ).move3( 1 )( 1 ).tag )
               )
