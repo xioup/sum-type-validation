@@ -1,7 +1,7 @@
 # Sum Type Validation
 Powerful, flexible, functional sum type / union type / ADT library with a focus on validation -- powered by [sanctuary-def](https://github.com/sanctuary-js/sanctuary-def).
 
-##Installation
+## Installation
 I'll add this to npm as soon as I get the packaging worked out.
 
 ## Maximum Functionality, Maximum Flexibility
@@ -54,7 +54,7 @@ const oops = Shape.Rect( bareCircle )
 //-> TypeError -- bareCircle doesn't match the Rect case
 ```
 
-2. `#Shape()` (generic constructor). Tests the argument against each case, starting with the **first** and short-circuiting as soon as a match is found.
+2. `#Shape()` (generic constructor). Like `tag`, tests the argument against each case, starting with the **first** and short-circuiting as soon as a match is found.
 ```JavaScript
 Shape.Shape( bareCircle )
 //-> wrapped value with #tag='Circle', #isCircle=true and #value=bareCircle
@@ -63,7 +63,7 @@ Shape.Shape( bareRect )
 Shape.Shape( bareTriangle )
 //-> TypeError -- bareTriangle doesn't match any of our cases
 ```
-3. `#Shape_()` (alternate generic constructor). Tests the argument against each case, starting with the **last** and short-circuiting as soon as a match is found.
+3. `#Shape_()` (alternate generic constructor). Like `tag_`, tests the argument against each case, starting with the **last** and short-circuiting as soon as a match is found.
 
 4. `#ShapeType`, `#CircleType`, `#RectType` -- valid sanctuary-def types with all of the requisite functionality you'd expect.
 
