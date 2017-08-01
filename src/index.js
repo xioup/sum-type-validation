@@ -28,6 +28,18 @@ const ifte =
     ifFn( x )
       ? tFn( x )
       : eFn( x )
+const when =
+  ifFn => tFn => x =>
+    ifFn( x )
+      ? tFn( x )
+      : x
+//const unless =
+//  ifFn => tFn => x =>
+//    !ifFn( x )
+//      ? tFn( x )
+//      : x
+const both =
+  p1 => p2 => x => p1( x ) && p2( x )
 //const isUndefined =
 //  x => typeof x === 'undefined'
 const isDefined =
@@ -161,8 +173,8 @@ export const createSumTypeFactory = options => {
                          ? [ tag
                            , def( fnName )
                                 ( {} )
-                                ( map( R.when( R.equals( PlaceholderType ) )
-                                             ( _ => _allCasesTypesMap[ tag ] )
+                                ( map( when( R.equals( PlaceholderType ) )
+                                           ( _ => _allCasesTypesMap[ tag ] )
                                      )
                                      ( sig )
                                 )
@@ -328,8 +340,13 @@ export const createSumTypeFactory = options => {
     const _getTag =
       kases =>
         ifte( isConstructed )
-            ( x => x.tag )
-            ( o( x => x.tag )
+            ( prop( 'tag' ) )
+            ( o( ifte( both( R.is( Object ) )
+                           ( x => R.is( String )( x.tag ) )
+                     )
+                     ( prop( 'tag' ) )
+                     ( _ => null )
+               )
                ( _firstMatchingCase( kases ) )
             )
 
@@ -361,8 +378,8 @@ export const createSumTypeFactory = options => {
       , [ name ]: def( 'toFirstMatch', {}, [ $.Any, SumTypeType ], _toFirstMatch( cases ) )
       , [ name + '_' ]: def( 'toFirstMatch_', {}, [ $.Any, SumTypeType ], _toFirstMatch( cases_ ) )
       , value: _getValue
-      , tag: def( 'getTag', {}, [ $.Any, $.String ], _getTag( cases ) )
-      , tag_: def( 'getTag_', {}, [ $.Any, $.String ], _getTag( cases_ ) )
+      , tag: def( 'getTag', {}, [ $.Any, $.Nullable( $.String ) ], _getTag( cases ) )
+      , tag_: def( 'getTag_', {}, [ $.Any, $.Nullable( $.String ) ], _getTag( cases_ ) )
       , tags: _dispatchTags
       , is
       , hasTags
