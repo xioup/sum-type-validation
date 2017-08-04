@@ -1,4 +1,4 @@
-import { createSumTypeFactory } from "../src/index"
+import { createSumTypeFactory } from "../src/index" // "../dist/sum-type-validation.min"
 import R                        from "ramda"
 
 const { env } = require( "sanctuary" )
