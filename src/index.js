@@ -10,7 +10,7 @@ const nTest = $.test( [] )
 const nType = $.NullaryType
 const o = f => g => h => f( g( h ) )
 const contains_ = R.flip( R.contains )
-const concat_ = R.flip( R.concat )
+//const concat_ = R.flip( R.concat )
 const W = f => x => f( x )( x )
 const pipe =
   fns => x =>
@@ -60,6 +60,8 @@ const keys =
       ( Object.keys )
 const of =
   x => [ x ]
+const append =
+  x => ys => [ ...ys, x ]
 
 export const createSumTypeFactory = options => {
   const def = $.create( options )
@@ -92,7 +94,7 @@ export const createSumTypeFactory = options => {
 
     // SumTypeType :: Type
     const SumTypeType =
-      nType( `${ nameSpace }/${ name }.${ name }` )
+      nType( `${ nameSpace }/${ name }` )
            ( url )
            ( o( isDefined )
               ( _firstMatchingCase( cases ) )
@@ -100,7 +102,7 @@ export const createSumTypeFactory = options => {
 
     // PlaceholderType :: Type
     const PlaceholderType =
-      nType( `${ nameSpace }/${ name }._PlaceholderType` )
+      nType( `${ nameSpace }/_PlaceholderType` )
            ( url )
            ( _ => false )
 
@@ -171,7 +173,7 @@ export const createSumTypeFactory = options => {
                        ? checkTypes
                          // we're checking types - return defined function
                          ? [ tag
-                           , def( fnName )
+                           , def( `${ tag }.${ fnName }` )
                                 ( {} )
                                 ( map( when( R.equals( PlaceholderType ) )
                                            ( _ => _allCasesTypesMap[ tag ] )
@@ -233,7 +235,7 @@ export const createSumTypeFactory = options => {
                          return(
                            returnsOurType && isConstructed( x )
                              ? outputIsPlaceholderType
-                               ? makeMember( bareRes, kase )
+                               ? st[ kase.tag ]( bareRes )
                                //INFERENCE
                                : _toFirstMatch( cases )( bareRes )
                              : bareRes
@@ -282,7 +284,7 @@ export const createSumTypeFactory = options => {
         R.reduce( ( acc, { tag } ) =>
                   ( isConstructed( x ) && x[ 'is' + tag ] )
                   || nTest( _allCasesTypesMap[ tag ], x )
-                    ? R.append( tag, acc )
+                    ? append( tag )( acc )
                     : acc
                 )
                 ( [] )
@@ -293,47 +295,6 @@ export const createSumTypeFactory = options => {
       ifte( isConstructed )
           ( x => x.tags( 0 ) )
           ( tags )
-
-    // makeMember :: Any -> Case -> SumType
-    const _makeMember =
-      ( x, { tag } ) =>
-        { const value =
-            checkTypes && R.is( Object )
-              ? Object.freeze( R.clone( x ) )
-              : x
-          const r =
-            { name
-            , url
-            , value
-            , tag
-            , '@@type':       typeIdentifier
-            , constructor:    SumTypeTypeRep
-            , tags:           memo( _ => tags( r ) )
-            , is:             memo( tag => is( tag, r ) )
-            , hasTags:        memo( tagNames => hasTags( tagNames, r ) )
-            , [ 'is' + tag ]: true
-            }
-
-          // TODO: Can this be sped up?
-          // Mutation ahead!
-          _sharedFns.forEach(
-            ( [ name, fn, arity ] ) =>
-              r[ name ] =
-                arity < 2
-                  ? memo( ( ...ys ) => fn( ...R.append( r, ys ) ) )
-                  : R.curryN( arity
-                            , memo( ( ...ys ) => fn( ...R.append( r, ys ) ) )
-                            )
-          )
-          return r
-        }
-    const makeMember = def( 'makeMember', {}, [ SumTypeType, $.Object, SumTypeType ], _makeMember )
-
-    // toFirstMatch :: Any -> SumType
-    const _toFirstMatch =
-      kases =>
-      R.converge( makeMember )
-                ( [ _getValue, _firstMatchingCase( kases ) ] )
 
     // TODO need to throw own TypeError on non member input
     // _getTag :: Any -> string
@@ -373,47 +334,109 @@ export const createSumTypeFactory = options => {
                 ( false )
                 ( tags )
 
-    return(
-      { [ name + 'Type' ]: SumTypeType
-      , [ name ]: def( 'toFirstMatch', {}, [ $.Any, SumTypeType ], _toFirstMatch( cases ) )
-      , [ name + '_' ]: def( 'toFirstMatch_', {}, [ $.Any, SumTypeType ], _toFirstMatch( cases_ ) )
-      , value: _getValue
-      , tag: def( 'getTag', {}, [ $.Any, $.Nullable( $.String ) ], _getTag( cases ) )
-      , tag_: def( 'getTag_', {}, [ $.Any, $.Nullable( $.String ) ], _getTag( cases_ ) )
-      , tags: _dispatchTags
-      , is
-      , hasTags
-        // caseFns :: StrMap( Function )
-      , ...R.fromPairs( _sharedFns )
-        // caseTypes :: StrMap( Type )
-      , ...pipe( [ R.toPairs
-                 , map( R.over( R.lensIndex( 0 ) )
-                              ( concat_( 'Type' ) )
-                      )
-                 , R.fromPairs
-                 ]
-               )
-               ( _allCasesTypesMap )
-        // caseConstructors :: StrMap( Function )
-      , ...R.map( ( { tag } ) =>
-                    def( `${ name }.${ tag }`
-                       , {}
-                       , [ _allCasesTypesMap[ tag ]
-                         , _allCasesTypesMap[ tag ]
-                         ]
-                       , x =>
-                           _makeMember( _getValue( x ), { tag } )
-                       )
-                )
-                ( _allCasesMap )
+    // makeMember :: Any -> Case -> SumType
+    const _makeMember =
+      ( x, proto ) =>
+        { const r = Object.create( proto )
+
+          r.value =
+            checkTypes && R.is( Object )
+              ? Object.freeze( R.clone( x ) )
+              : x
+
+          r.tags    = memo( _ => tags( r ) )
+          r.hasTags = memo( tagNames => hasTags( tagNames, r ) )
+          r.is      = memo( tagName => is( tagName, r ) )
+
+          // Mutation ahead!
+          _sharedFns.forEach(
+            ( [ name, fn, arity ] ) =>
+              { r[ name ] =
+                  arity < 2
+                    ? ( ...ys ) => fn( ...append( r )( ys ) )
+                    : R.curryN( arity
+                              , ( ...ys ) => fn( ...append( r )( ys ) )
+                              )
+              }
+          )
+
+          return r
+        }
+    const makeMember = def( 'makeMember', {}, [ SumTypeType, $.Any, SumTypeType ], _makeMember )
+
+    const constructors =
+      ( n, kasesMap ) =>
+      { const proto = { [ '@@type' ]: typeIdentifier }
+        const TypeRep =
+          def( n, {}, [ SumTypeType, SumTypeType ], x =>
+        st[ _firstMatchingCase( cases )( x ).tag ]( x ) )
+        TypeRep.prototype = proto
+        TypeRep.Type = SumTypeType
+        TypeRep.hasTags = def( 'hasTags', {}, [ $.Array( $.String ), $.Any, $.Boolean ], hasTags )
+        TypeRep.is = $.test( [], SumTypeType )
+        TypeRep.tag = def( 'getTag', {}, [ $.Any, $.Nullable( $.String ) ], _getTag( cases ) )
+        TypeRep.tag_ = def( 'getTag_', {}, [ $.Any, $.Nullable( $.String ) ], _getTag( cases_ ) )
+        TypeRep.tags = def( 'tags', {}, [ $.Any, $.Array( $.Nullable( $.String ) ) ], _dispatchTags )
+        TypeRep.value = def( 'value', {}, [ SumTypeType, SumTypeType ], _getValue )
+
+        _sharedFns.forEach(
+          ( [ fnName, fn ] ) =>
+            TypeRep[ fnName ] = fn
+        )
+
+        proto.constructor = SumTypeTypeRep
+
+        Object.keys( kasesMap ).forEach(
+          tagName =>
+            {
+              const tagProto = Object.create( proto )
+              const tagType = _allCasesTypesMap[ tagName ]
+
+              const memberProto =
+                { name
+                , url
+                , tag:                tagName
+                , '@@type':           typeIdentifier
+                , constructor:        SumTypeTypeRep
+                , [ 'is' + tagName ]: true
+                }
+
+              const tagConstructor =
+                def( tagName
+                   , {}
+                   , [ tagType, tagType ]
+                   , x =>
+                       makeMember( _getValue( x ) )
+                                 ( memberProto )
+                   )
+
+              const _is =
+                  tagName => x => is( tagName, x )
+              tagConstructor.is =
+                def( `${ tagName }.is`, {}, [ $.Any, $.Boolean ], _is( tagName ) )
+              tagConstructor.url = url
+              tagConstructor.Type = tagType
+              tagConstructor.prototype = tagProto
+              TypeRep[ tagName ] = tagConstructor
+            }
+        )
+        return TypeRep
       }
-    )
+
+    const st = constructors( name, _allCasesMap )
+
+    // toFirstMatch :: Any -> SumType
+    const _toFirstMatch =
+      kases => x =>
+        st[ _firstMatchingCase( kases )( x ).tag ]( x )
+
+    return st
   }
 
   return (
     def( 'SumType'
        , {}
-       , [ $.String, $.PositiveInteger, $.String, $.Array( $.Object ), $.Nullable( $.Object ), $.Object ]
+       , [ $.String, $.PositiveInteger, $.String, $.Array( $.Object ), $.Nullable( $.Object ), $.AnyFunction ]
        , _SumType
        )
   )

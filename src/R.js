@@ -1,3 +1,4 @@
+import __             from "ramda/src/__"
 import ap             from "ramda/src/ap"
 import append         from "ramda/src/append"
 import assoc          from "ramda/src/assoc"
@@ -29,6 +30,7 @@ import pluck          from "ramda/src/pluck"
 //import prop           from "ramda/src/prop"
 import reduce         from "ramda/src/reduce"
 import reduced        from "ramda/src/reduced"
+import repeat         from "ramda/src/repeat"
 //import reverse        from "ramda/src/reverse"
 import tap            from "ramda/src/tap"
 import toPairs        from "ramda/src/toPairs"
@@ -39,7 +41,8 @@ import zipObj         from "ramda/src/zipObj"
 
 export default
   {
-    ap
+    __
+  , ap
   , append
   , assoc
   , clone
@@ -70,6 +73,7 @@ export default
 //  , prop
   , reduce
   , reduced
+  , repeat
 //  , reverse
   , tap
   , toPairs
