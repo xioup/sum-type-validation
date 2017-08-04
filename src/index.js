@@ -344,8 +344,9 @@ export const createSumTypeFactory = options => {
               ? Object.freeze( R.clone( x ) )
               : x
 
-          r.tags =    memo( _ => tags( r ) )
-          r.hasTags=  memo( tagNames => hasTags( tagNames, r ) )
+          r.tags    = memo( _ => tags( r ) )
+          r.hasTags = memo( tagNames => hasTags( tagNames, r ) )
+          r.is      = memo( tagName => is( tagName, r ) )
 
           // Mutation ahead!
           _sharedFns.forEach(
@@ -389,6 +390,7 @@ export const createSumTypeFactory = options => {
           tagName =>
             {
               const tagProto = Object.create( proto )
+              const tagType = _allCasesTypesMap[ tagName ]
 
               const memberProto =
                 { name
@@ -399,19 +401,23 @@ export const createSumTypeFactory = options => {
                 , [ 'is' + tagName ]: true
                 }
 
-              const tag =
-                x =>
-                  makeMember( _getValue( x ) )
-                            ( memberProto )
+              const tagConstructor =
+                def( tagName
+                   , {}
+                   , [ tagType, tagType ]
+                   , x =>
+                       makeMember( _getValue( x ) )
+                                 ( memberProto )
+                   )
 
               const _is =
                   tagName => x => is( tagName, x )
-              tag.is =
+              tagConstructor.is =
                 def( `${ tagName }.is`, {}, [ $.Any, $.Boolean ], _is( tagName ) )
-              tag.url = url
-              tag.Type = _allCasesTypesMap[ tagName ]
-              tag.prototype = tagProto
-              TypeRep[ tagName ] = tag
+              tagConstructor.url = url
+              tagConstructor.Type = tagType
+              tagConstructor.prototype = tagProto
+              TypeRep[ tagName ] = tagConstructor
             }
         )
         return TypeRep
