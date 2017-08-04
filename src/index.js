@@ -9,8 +9,9 @@ const memo = R.memoize
 const nTest = $.test( [] )
 const nType = $.NullaryType
 const o = f => g => h => f( g( h ) )
-const contains_ = R.flip( R.contains )
-//const concat_ = R.flip( R.concat )
+const flip = fn => x => y => fn( y )( x )
+const contains_ = flip( R.contains )
+//const concat_ = flip( R.concat )
 const W = f => x => f( x )( x )
 const pipe =
   fns => x =>
@@ -44,20 +45,31 @@ const both =
 //  x => typeof x === 'undefined'
 const isDefined =
   x => typeof x !== 'undefined'
-/*
-const isNull =
-  x => x === null
-  */
+//const isNull =
+//  x => x === null
 const isNil =
   x => x == null
 //const isNotNil =
 //  x => x != null
+//const is =
+//  Ctor => x =>
+//    isNotNil( x )
+//    && ( x.constructor === Ctor || x instanceof Ctor )
 const id =
   x => x
 const keys =
   ifte( isNil )
       ( _ => [] )
       ( Object.keys )
+const assoc =
+  name => val => t =>
+    { const r = Object.assign( {}, t )
+      r[ name ] = val
+      return r
+    }
+const merge =
+  x => y =>
+    Object.assign( Object.assign( {}, x ), y )
 const of =
   x => [ x ]
 const append =
@@ -123,28 +135,28 @@ export const createSumTypeFactory = options => {
     // _allCasesTypesMap :: StrMap( Type )
     const _allCasesTypesMap =
       R.reduce( ( acc, { tag, type: t } ) =>
-                  R.assoc( tag )
-                         ( nType( `${ nameSpace }/${ name }.${ tag }` )
-                                ( url )
-                                ( nTest( $.Type, t )
-                                    ? x => nTest( t, _getValue( x ) ) // Type
-                                    : R.is( Function, t )
-                                      ? x => t( _getValue( x ) ) // Predicate
-                                      : x => R.equals( t, _getValue( x ) ) // Unit
-                                )
-                         )
-                         ( acc )
+                  assoc( tag )
+                       ( nType( `${ nameSpace }/${ name }.${ tag }` )
+                              ( url )
+                              ( nTest( $.Type, t )
+                                  ? x => nTest( t, _getValue( x ) ) // Type
+                                  : R.is( Function )( t )
+                                    ? x => t( _getValue( x ) ) // Predicate
+                                    : x => R.equals( t, _getValue( x ) ) // Unit
+                              )
+                       )
+                       ( acc )
               )
               ( {} )
               ( cases )
 
     // _allTypesMap :: StrMap( Type )
     const _allTypesMap =
-      R.merge( { __: PlaceholderType
-               , ST: SumTypeType
-               }
-             )
-             ( _allCasesTypesMap )
+      merge( { __: PlaceholderType
+             , ST: SumTypeType
+             }
+           )
+           ( _allCasesTypesMap )
 
     // _allFnNames :: Array( String )
     const _allFnNames =
@@ -169,7 +181,7 @@ export const createSumTypeFactory = options => {
                      R.path( [ tag, 'fns', fnName ] )
                            ( _allCasesMap )
                    return(
-                     R.is( Function, fn )
+                     R.is( Function )( fn )
                        ? checkTypes
                          // we're checking types - return defined function
                          ? [ tag
@@ -273,7 +285,7 @@ export const createSumTypeFactory = options => {
          ( _allFnNames )
 
     const _getValue =
-      ifte( isConstructed )
+      ifte( x => isConstructed( x ) || typeof x.value !== 'undefined' )
           ( x => x.value )
           ( id )
 
@@ -283,7 +295,7 @@ export const createSumTypeFactory = options => {
       x =>
         R.reduce( ( acc, { tag } ) =>
                   ( isConstructed( x ) && x[ 'is' + tag ] )
-                  || nTest( _allCasesTypesMap[ tag ], x )
+                  || nTest( _allCasesTypesMap[ tag ], _getValue( x ) )
                     ? append( tag )( acc )
                     : acc
                 )
@@ -318,7 +330,7 @@ export const createSumTypeFactory = options => {
     // is :: String -> Any -> Either( ? )
     const is =
       ( tag, x ) =>
-        R.contains( tag, _allCasesTags )
+        R.contains( tag )( _allCasesTags )
           ? ( isConstructed( x ) && x[ 'is' + tag ] )
             || nTest( _allCasesTypesMap[ tag ], x )
           : _throwInvalidTagErr( tag, name )
@@ -340,7 +352,7 @@ export const createSumTypeFactory = options => {
         { const r = Object.create( proto )
 
           r.value =
-            checkTypes && R.is( Object )
+            checkTypes && R.is( Object )( x )
               ? Object.freeze( R.clone( x ) )
               : x
 
@@ -373,7 +385,7 @@ export const createSumTypeFactory = options => {
         TypeRep.prototype = proto
         TypeRep.Type = SumTypeType
         TypeRep.hasTags = def( 'hasTags', {}, [ $.Array( $.String ), $.Any, $.Boolean ], hasTags )
-        TypeRep.is = $.test( [], SumTypeType )
+        TypeRep.is = x => $.test( [], SumTypeType, x ) || _getTag( _getValue( x ) ) != null
         TypeRep.tag = def( 'getTag', {}, [ $.Any, $.Nullable( $.String ) ], _getTag( cases ) )
         TypeRep.tag_ = def( 'getTag_', {}, [ $.Any, $.Nullable( $.String ) ], _getTag( cases_ ) )
         TypeRep.tags = def( 'tags', {}, [ $.Any, $.Array( $.Nullable( $.String ) ) ], _dispatchTags )

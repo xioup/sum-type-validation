@@ -1,7 +1,7 @@
 import __             from "ramda/src/__"
 import ap             from "ramda/src/ap"
 import append         from "ramda/src/append"
-import assoc          from "ramda/src/assoc"
+//import assoc          from "ramda/src/assoc"
 import clone          from "ramda/src/clone"
 import concat         from "ramda/src/concat"
 import contains       from "ramda/src/contains"
@@ -12,17 +12,17 @@ import equals         from "ramda/src/equals"
 import findLastIndex  from "ramda/src/findLastIndex"
 import find           from "ramda/src/find"
 import flatten        from "ramda/src/flatten"
-import flip           from "ramda/src/flip"
+//import flip           from "ramda/src/flip"
 import fromPairs      from "ramda/src/fromPairs"
-import ifElse         from "ramda/src/ifElse"
+//import ifElse         from "ramda/src/ifElse"
 import init           from "ramda/src/init"
 import is             from "ramda/src/is"
 //import keys           from "ramda/src/keys"
 import last           from "ramda/src/last"
 import lensIndex      from "ramda/src/lensIndex"
-import map            from "ramda/src/map"
+//import map            from "ramda/src/map"
 import memoize        from "ramda/src/memoize"
-import merge          from "ramda/src/merge"
+//import merge          from "ramda/src/merge"
 //import of             from "ramda/src/of"
 import over           from "ramda/src/over"
 import path           from "ramda/src/path"
@@ -36,7 +36,7 @@ import tap            from "ramda/src/tap"
 import toPairs        from "ramda/src/toPairs"
 import uniq           from "ramda/src/uniq"
 import values         from "ramda/src/values"
-import when           from "ramda/src/when"
+//import when           from "ramda/src/when"
 import zipObj         from "ramda/src/zipObj"
 
 export default
@@ -44,7 +44,7 @@ export default
     __
   , ap
   , append
-  , assoc
+//  , assoc
   , clone
   , concat
   , contains
@@ -55,17 +55,17 @@ export default
   , findLastIndex
   , find
   , flatten
-  , flip
+//  , flip
   , fromPairs
-  , ifElse
+//  , ifElse
   , init
   , is
 //  , keys
   , last
   , lensIndex
-  , map
+//  , map
   , memoize
-  , merge
+//  , merge
 //  , of
   , over
   , path
@@ -79,6 +79,6 @@ export default
   , toPairs
   , uniq
   , values
-  , when
+//  , when
   , zipObj
   }
