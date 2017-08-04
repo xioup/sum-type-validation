@@ -152,4 +152,5 @@ Before I started working on this library, I researched the various sum type libr
 4. [sum-types](https://github.com/geigerzaehler/sum-types): Create and match against sum types in Javascript
 
 Plus one newer library that I haven't had a chance to look at closely, yet:
+
 [static-sum-type](https://www.npmjs.com/package/static-sum-type): A simple library for complex logic.
