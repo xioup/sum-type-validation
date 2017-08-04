@@ -143,5 +143,10 @@ Shape.value( bareTriangle )
 ```
 
 ### Why another sum type library?
-Before I started working on this library, I researched the various sum type libraries that were already available on npm. While I found all of them to be useful, I also found each of them to be limiting in ways that made them less than optimal fits for my use case (data classification and validation). I read up on sum types in Haskell and tried to develop an API that mimics Haskell's behavior to the extent that that's possible in JavaScript, while also  
+Before I started working on this library, I researched the various sum type libraries that were already available on npm. While I found all of them to be useful, I also found each of them to be limiting in ways that made them less than optimal fits for my use case (data classification and validation). This library is my attempt to create an optimal fit for my use case.
 
+### Other sum type libraries
+1. [daggy](https://github.com/fantasyland/daggy): Library for creating tagged constructors.
+2. [sum-type](https://github.com/JAForbes/sum-type): UnionType + Sanctuary = Better Error Messages
+3. [union-type](https://github.com/paldepind/union-type): A small JavaScript library for defining and using union types.
+4. [sum-types](https://github.com/geigerzaehler/sum-types): Create and match against sum types in Javascript
