@@ -1468,7 +1468,7 @@ describe( `Instance Methods`, () =>
             assert( s5x5Wrapped.hasTags( ['SquareUnit5x5', 'Square', 'Rect'] ) )
           )
         }
-      )/*
+      )
       describe( `#is()`, () =>
         {
           it( `'Circle' matches a circle`, () =>
@@ -1491,7 +1491,7 @@ describe( `Instance Methods`, () =>
             }
           )
         }
-      )*/
+      )
       describe( `#tags()`, () =>
         {
           it( `equals ['Circle'] for circle`, () =>
