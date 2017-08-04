@@ -146,6 +146,9 @@ describe( `SumType`, () =>
         {
           describe( `Standard Properties`, () =>
             {
+              it( `is a function`, () =>
+                assert( typeof Shape === 'function' )
+              )
               it( `has #hasTags() method`, () =>
                 assert( typeof Shape.hasTags === 'function' )
               )
@@ -168,32 +171,29 @@ describe( `SumType`, () =>
               it( `has #Circle() method`, () =>
                 assert( typeof Shape.Circle === 'function' )
               )
-              it( `has #CircleType is Type ( from Type )`, () =>
-                assert( $.test( [], $.Type, Shape.CircleType ) )
+              it( `has #Circle#Type is Type ( from Type )`, () =>
+                assert( $.test( [], $.Type, log( Shape.Circle.Type ) ) )
               )
               it( `has #Rect() method`, () =>
                 assert( typeof Shape.Rect === 'function' )
               )
-              it( `has #RectType is ( Type from Type )`, () =>
-                assert( $.test( [], $.Type, Shape.RectType ) )
+              it( `has #Rect#Type is ( Type from Type )`, () =>
+                assert( $.test( [], $.Type, Shape.Rect.Type ) )
               )
-              it( `has #Shape() method`, () =>
-                assert( typeof Shape.Shape === 'function' )
-              )
-              it( `has #ShapeType is Type ( sum type )`, () =>
-                assert( $.test( [], $.Type, Shape.ShapeType ) )
+              it( `has #Type is Type ( sum type )`, () =>
+                assert( $.test( [], $.Type, Shape.Type ) )
               )
               it( `has #Square() method`, () =>
                 assert( typeof Shape.Square === 'function' )
               )
-              it( `has #SquareType is Type ( from predicate )`, () =>
-                assert( $.test( [], $.Type, Shape.SquareType ) )
+              it( `has #Square#Type is Type ( from predicate )`, () =>
+                assert( $.test( [], $.Type, Shape.Square.Type ) )
               )
               it( `has #SquareUnit5x5() method`, () =>
                 assert( typeof Shape.SquareUnit5x5 === 'function' )
               )
-              it( `has #SquareUnit5x5Type is Type (from Unit)`, () =>
-                assert( $.test( [], $.Type, Shape.SquareUnit5x5Type ) )
+              it( `has #SquareUnit5x5#Type is Type (from Unit)`, () =>
+                assert( $.test( [], $.Type, Shape.SquareUnit5x5.Type ) )
               )
               it( `has #area() method ( user-defined )`, () =>
                 assert( typeof Shape.area === 'function' )
@@ -283,46 +283,46 @@ describe( `Shape`, () => {
         {
           describe( `Wrapped Input`, () =>
             {
-              it( `returns a Shape.ShapeType with member`, () =>
-                assert( $.test( [], Shape.ShapeType, Shape.Shape( cWrapped ) ) )
+              it( `returns a Shape.Type with member`, () =>
+                assert( $.test( [], Shape.Type, Shape( cWrapped ) ) )
               )
-              it( `returns a Shape.CircleType with circle`, () =>
-                assert( $.test( [], Shape.CircleType, Shape.Shape( cWrapped ) ) )
+              it( `returns a Shape.Circle.Type with circle`, () =>
+                assert( $.test( [], Shape.Circle.Type, Shape( cWrapped ) ) )
               )
               describe( `Ambiguous Type`, () =>
                 {
                   // Seems weird but is correct
-                  it( `return has the first matching type (RectType) with square`, () =>
-                    assert( $.test( [], Shape.RectType, Shape.Shape( sWrapped ) ) )
+                  it( `return has the first matching type (Rect.Type) with square`, () =>
+                    assert( $.test( [], Shape.Rect.Type, Shape( sWrapped ) ) )
                   )
                 }
               )
               describe( `Return Object Validity`, () =>
                 {
                   it( `has #@@type === typeIdentifier`, () =>
-                    assert( Shape.Shape( cWrapped )[ '@@type' ] === typeIdentifier )
+                    assert( Shape( cWrapped )[ '@@type' ] === typeIdentifier )
                   )
                   it( `has #constructor R.equals SumTypeTypeRep`, () =>
-                    assert( R.equals( Shape.Shape( cWrapped ).constructor, SumTypeTypeRep ) )
+                    assert( R.equals( Shape( cWrapped ).constructor, SumTypeTypeRep ) )
                   )
                   it( `has #isCircle === true`, () =>
-                    assert( Shape.Shape( cWrapped ).isCircle === true )
+                    assert( Shape( cWrapped ).isCircle === true )
                   )
                   it( `has #name === shapeName`, () =>
-                    assert( Shape.Shape( cWrapped ).name === shapeName )
+                    assert( Shape( cWrapped ).name === shapeName )
                   )
                   it( `has #tag === 'Circle'`, () =>
-                    assert( Shape.Shape( cWrapped ).tag === 'Circle' )
+                    assert( Shape( cWrapped ).tag === 'Circle' )
                   )
                   it( `has #url === shapeUrl`, () =>
-                    assert( Shape.Shape( cWrapped ).url === shapeUrl )
+                    assert( Shape( cWrapped ).url === shapeUrl )
                   )
                   it( `has #value R.equals circle.value`, () =>
-                    assert( R.equals( Shape.Shape( cWrapped ).value, cWrapped.value ) )
+                    assert( R.equals( Shape( cWrapped ).value, cWrapped.value ) )
                   )
                   if( opts.checkTypes ) {
                     it( `has #value !== circle.value`, () =>
-                      assert( Shape.Shape( cWrapped ).value !== cWrapped.value )
+                      assert( Shape( cWrapped ).value !== cWrapped.value )
                     )
                   }
                 }
@@ -331,45 +331,45 @@ describe( `Shape`, () => {
           )
           describe( `Bare Member Input`, () =>
             {
-              it( `returns a Shape.ShapeType with member`, () =>
-                assert( $.test( [], Shape.ShapeType, Shape.Shape( cBare ) ) )
+              it( `returns a Shape.Type with member`, () =>
+                assert( $.test( [], Shape.Type, Shape( cBare ) ) )
               )
-              it( `returns a Shape.CircleType with circle`, () =>
-                assert( $.test( [], Shape.CircleType, Shape.Shape( cBare ) ) )
+              it( `returns a Shape.Circle.Type with circle`, () =>
+                assert( $.test( [], Shape.Circle.Type, Shape( cBare ) ) )
               )
               describe( `Ambiguous Type`, () =>
                 {
-                  it( `return has the first matching type (RectType) with square`, () =>
-                    assert( $.test( [], Shape.RectType, Shape.Shape( sBare ) ) )
+                  it( `return has the first matching type (Rect.Type) with square`, () =>
+                    assert( $.test( [], Shape.Rect.Type, Shape( sBare ) ) )
                   )
                 }
               )
               describe( `Return Object Validity`, () =>
                 {
                   it( `has #@@type === typeIdentifier`, () =>
-                    assert( Shape.Shape( cBare )[ '@@type' ] === typeIdentifier )
+                    assert( Shape( cBare )[ '@@type' ] === typeIdentifier )
                   )
                   it( `has #constructor R.equals SumTypeTypeRep`, () =>
-                    assert( R.equals( Shape.Shape( cBare ).constructor, SumTypeTypeRep ) )
+                    assert( R.equals( Shape( cBare ).constructor, SumTypeTypeRep ) )
                   )
                   it( `has #isCircle === true`, () =>
-                    assert( Shape.Shape( cBare ).isCircle === true )
+                    assert( Shape( cBare ).isCircle === true )
                   )
                   it( `has #name === shapeName`, () =>
-                    assert( Shape.Shape( cBare ).name === shapeName )
+                    assert( Shape( cBare ).name === shapeName )
                   )
                   it( `has #tag === 'Circle'`, () =>
-                    assert( Shape.Shape( cBare ).tag === 'Circle' )
+                    assert( Shape( cBare ).tag === 'Circle' )
                   )
                   it( `has #url === shapeUrl`, () =>
-                    assert( Shape.Shape( cBare ).url === shapeUrl )
+                    assert( Shape( cBare ).url === shapeUrl )
                   )
                   it( `has #value R.equals circle`, () =>
-                    assert( R.equals( Shape.Shape( cBare ).value, cBare ) )
+                    assert( R.equals( Shape( cBare ).value, cBare ) )
                   )
                   if( opts.checkTypes ) {
                     it( `has #value !== circle`, () =>
-                      assert( Shape.Shape( cBare ).value !== cBare )
+                      assert( Shape( cBare ).value !== cBare )
                     )
                   }
                 }
@@ -379,57 +379,58 @@ describe( `Shape`, () => {
           describe( `Non Member`, () =>
             {
                 it( `throws a TypeError with a non member input`, () =>
-                  assert.throws( () => Shape.Shape( {} ), TypeError )
+                  assert.throws( () => Shape( {} ), TypeError )
                 )
             }
           )
         }
       )
+      /*
       describe( `#Shape_()`, () =>
         {
           describe( `Wrapped Input`, () =>
             {
-              it( `returns a Shape.ShapeType with member`, () =>
-                assert( $.test( [], Shape.ShapeType, Shape.Shape_( sWrapped ) ) )
+              it( `returns a Shape.Type with member`, () =>
+                assert( $.test( [], Shape.Type, Shape_( sWrapped ) ) )
               )
               describe( `Ambiguous Type`, () =>
                 {
-                  it( `return has the last matching type (SquareType) with 4x4 square`, () =>
-                    assert( $.test( [], Shape.SquareType, Shape.Shape_( sWrapped ) ) )
+                  it( `return has the last matching type (Square.Type) with 4x4 square`, () =>
+                    assert( $.test( [], Shape.Square.Type, Shape_( sWrapped ) ) )
                   )
-                  it( `return has the last matching type (SquareUnit5x5Type) with 5x5 square`, () =>
-                    assert( $.test( [], Shape.SquareUnit5x5Type, Shape.Shape_( s5x5Wrapped ) ) )
+                  it( `return has the last matching type (SquareUnit5x5.Type) with 5x5 square`, () =>
+                    assert( $.test( [], Shape.SquareUnit5x5.Type, Shape_( s5x5Wrapped ) ) )
                   )
                 }
               )
               describe( `Return Object Validity`, () =>
                 {
                   it( `has #@@type === typeIdentifier`, () =>
-                    assert( Shape.Shape_( cWrapped )[ '@@type' ] === typeIdentifier )
+                    assert( Shape_( cWrapped )[ '@@type' ] === typeIdentifier )
                   )
                   it( `has #constructor R.equals SumTypeTypeRep`, () =>
-                    assert( R.equals( Shape.Shape_( cWrapped ).constructor, SumTypeTypeRep ) )
+                    assert( R.equals( Shape_( cWrapped ).constructor, SumTypeTypeRep ) )
                   )
                   it( `has #isCircle === true`, () =>
-                    assert( Shape.Shape_( cWrapped ).isCircle === true )
+                    assert( Shape_( cWrapped ).isCircle === true )
                   )
                   it( `has #name === shapeName`, () =>
-                    assert( Shape.Shape_( cWrapped ).name === shapeName )
+                    assert( Shape_( cWrapped ).name === shapeName )
                   )
                   it( `has #tag === 'Circle'`, () =>
-                    assert( Shape.Shape_( cWrapped ).tag === 'Circle' )
+                    assert( Shape_( cWrapped ).tag === 'Circle' )
                   )
                   it( `has #url === shapeUrl`, () =>
-                    assert( Shape.Shape_( cWrapped ).url === shapeUrl )
+                    assert( Shape_( cWrapped ).url === shapeUrl )
                   )
                   if( opts.checkTypes ) {
                     it( `has #value R.equals circle.value`, () =>
-                      assert( R.equals( Shape.Shape_( cWrapped ).value, cWrapped.value ) )
+                      assert( R.equals( Shape_( cWrapped ).value, cWrapped.value ) )
                     )
                   }
                   if( opts.checkTypes ) {
                     it( `has #value !== circle.value`, () =>
-                      assert( Shape.Shape_( cWrapped ).value !== cWrapped.value )
+                      assert( Shape_( cWrapped ).value !== cWrapped.value )
                     )
                   }
                 }
@@ -438,17 +439,17 @@ describe( `Shape`, () => {
           )
           describe( `Bare Member Input`, () =>
             {
-              it( `returns a Shape.ShapeType with member`, () =>
-                assert( $.test( [], Shape.ShapeType, Shape.Shape_( cBare ) ) )
+              it( `returns a Shape.Type with member`, () =>
+                assert( $.test( [], Shape.Type, Shape_( cBare ) ) )
               )
               describe( `Ambiguous Type`, () =>
                 {
                 {
-                  it( `return has the last matching type (SquareType) with 4x4 square`, () =>
-                    assert( $.test( [], Shape.SquareType, Shape.Shape_( sBare ) ) )
+                  it( `return has the last matching type (Square.Type) with 4x4 square`, () =>
+                    assert( $.test( [], Shape.Square.Type, Shape_( sBare ) ) )
                   )
-                  it( `return has the last matching type (SquareUnit5x5Type) with 5x5 square`, () =>
-                    assert( $.test( [], Shape.SquareUnit5x5Type, Shape.Shape_( s5x5Bare ) ) )
+                  it( `return has the last matching type (SquareUnit5x5.Type) with 5x5 square`, () =>
+                    assert( $.test( [], Shape.SquareUnit5x5.Type, Shape_( s5x5Bare ) ) )
                   )
                 }
                 }
@@ -456,29 +457,29 @@ describe( `Shape`, () => {
               describe( `Return Object Validity`, () =>
                 {
                   it( `has #@@type === typeIdentifier`, () =>
-                    assert( Shape.Shape_( cBare )[ '@@type' ] === typeIdentifier )
+                    assert( Shape_( cBare )[ '@@type' ] === typeIdentifier )
                   )
                   it( `has #constructor R.equals SumTypeTypeRep`, () =>
-                    assert( R.equals( Shape.Shape_( cBare ).constructor, SumTypeTypeRep ) )
+                    assert( R.equals( Shape_( cBare ).constructor, SumTypeTypeRep ) )
                   )
                   it( `has #isCircle === true`, () =>
-                    assert( Shape.Shape_( cBare ).isCircle === true )
+                    assert( Shape_( cBare ).isCircle === true )
                   )
                   it( `has #name === shapeName`, () =>
-                    assert( Shape.Shape_( cBare ).name === shapeName )
+                    assert( Shape_( cBare ).name === shapeName )
                   )
                   it( `has #tag === 'Circle'`, () =>
-                    assert( Shape.Shape_( cBare ).tag === 'Circle' )
+                    assert( Shape_( cBare ).tag === 'Circle' )
                   )
                   it( `has #url === shapeUrl`, () =>
-                    assert( Shape.Shape_( cBare ).url === shapeUrl )
+                    assert( Shape_( cBare ).url === shapeUrl )
                   )
                   it( `has #value R.equals circle`, () =>
-                    assert( R.equals( Shape.Shape_( cBare ).value, cBare ) )
+                    assert( R.equals( Shape_( cBare ).value, cBare ) )
                   )
                   if( opts.checkTypes ) {
                     it( `has #value !== circle`, () =>
-                      assert( Shape.Shape_( cBare ).value !== cBare )
+                      assert( Shape_( cBare ).value !== cBare )
                     )
                   }
                 }
@@ -488,18 +489,18 @@ describe( `Shape`, () => {
           describe( `Non Member`, () =>
             {
               it( `throws a TypeError with a non member input`, () =>
-                assert.throws( () => Shape.Shape_( {} ), TypeError )
+                assert.throws( () => Shape_( {} ), TypeError )
               )
             }
           )
         }
-      )
+      )*/
       describe( `#Circle()`, () =>
         {
           describe( `Wrapped Input`, () =>
             {
-              it( `returns a Shape.CircleType with member`, () =>
-                assert( $.test( [], Shape.CircleType, Shape.Circle( cWrapped ) ) )
+              it( `returns a Shape.Circle.Type with member`, () =>
+                assert( $.test( [], Shape.Circle.Type, Shape.Circle( cWrapped ) ) )
               )
               if( opts.checkTypes ) {
                 it( `throws a TypeError with a sum type member that doesn't match`, () =>
@@ -527,11 +528,11 @@ describe( `Shape`, () => {
                     assert( Shape.Circle( cWrapped ).url === shapeUrl )
                   )
                   it( `has #value R.equals circle.value`, () =>
-                    assert( R.equals( Shape.Shape( cWrapped ).value, cWrapped.value ) )
+                    assert( R.equals( Shape( cWrapped ).value, cWrapped.value ) )
                   )
                   if( opts.checkTypes ) {
                     it( `has #value !== circle.value`, () =>
-                      assert( Shape.Shape( cWrapped ).value !== cWrapped.value )
+                      assert( Shape( cWrapped ).value !== cWrapped.value )
                     )
                   }
                 }
@@ -540,8 +541,8 @@ describe( `Shape`, () => {
           )
           describe( `Bare Member Input`, () =>
             {
-              it( `returns a Shape.CircleType with member`, () =>
-                assert( $.test( [], Shape.CircleType, Shape.Circle( cBare ) ) )
+              it( `returns a Shape.Circle.Type with member`, () =>
+                assert( $.test( [], Shape.Circle.Type, Shape.Circle( cBare ) ) )
               )
               if( opts.checkTypes ) {
                 it( `throws a TypeError with a sum type member that doesn't match`, () =>
@@ -569,11 +570,11 @@ describe( `Shape`, () => {
                     assert( Shape.Circle( cBare ).url === shapeUrl )
                   )
                   it( `has #value R.equals circle`, () =>
-                    assert( R.equals( Shape.Shape( cBare ).value, cBare ) )
+                    assert( R.equals( Shape( cBare ).value, cBare ) )
                   )
                   if( opts.checkTypes ) {
                     it( `has #value !== circle`, () =>
-                      assert( Shape.Shape( cBare ).value !== cBare )
+                      assert( Shape( cBare ).value !== cBare )
                     )
                   }
                 }
@@ -595,11 +596,11 @@ describe( `Shape`, () => {
         {
           describe( `Ambiguous Type`, () =>
             {
-              it( `returns a Shape.RectType with bare square`, () =>
-                assert( $.test( [], Shape.RectType, Shape.Rect( sBare ) ) )
+              it( `returns a Shape.Rect.Type with bare square`, () =>
+                assert( $.test( [], Shape.Rect.Type, Shape.Rect( sBare ) ) )
               )
-              it( `returns a Shape.RectType with wrapped square`, () =>
-                assert( $.test( [], Shape.RectType, Shape.Rect( sWrapped ) ) )
+              it( `returns a Shape.Rect.Type with wrapped square`, () =>
+                assert( $.test( [], Shape.Rect.Type, Shape.Rect( sWrapped ) ) )
               )
             }
           )
@@ -626,17 +627,17 @@ describe( `Shape`, () => {
           describe( `Wrapped Input`, () =>
             {
               it( `returns a Shape.SquareUnit5x5 with 5x5 squareUnit`, () =>
-                assert( $.test( [], Shape.SquareUnit5x5Type, Shape.SquareUnit5x5( s5x5Wrapped ) ) )
+                assert( $.test( [], Shape.SquareUnit5x5.Type, Shape.SquareUnit5x5( s5x5Wrapped ) ) )
               )
               it( `returns a Shape.SquareUnit5x5 with 5x5 square`, () =>
-                assert( $.test( [], Shape.SquareUnit5x5Type, Shape.SquareUnit5x5( Shape.Square( s5x5Bare ) ) ) )
+                assert( $.test( [], Shape.SquareUnit5x5.Type, Shape.SquareUnit5x5( Shape.Square( s5x5Bare ) ) ) )
               )
             }
           )
           describe( `Bare Input`, () =>
             {
               it( `returns a Shape.SquareUnit5x5 with 5x5 square`, () =>
-                assert( $.test( [], Shape.SquareUnit5x5Type, Shape.SquareUnit5x5( s5x5Bare ) ) )
+                assert( $.test( [], Shape.SquareUnit5x5.Type, Shape.SquareUnit5x5( s5x5Bare ) ) )
               )
             }
           )
@@ -664,152 +665,152 @@ describe( `Shape`, () => {
   )
   describe( `Types`, () =>
     {
-      describe( `#ShapeType`, () =>
+      describe( `#Type`, () =>
         {
           describe( `Wrapped Input`, () =>
             {
               it( `matches a circle`, () =>
-                assert( $.test( [], Shape.ShapeType, cWrapped ) )
+                assert( $.test( [], Shape.Type, cWrapped ) )
               )
               it( `matches a rect`, () =>
-                assert( $.test( [], Shape.ShapeType, rWrapped ) )
+                assert( $.test( [], Shape.Type, rWrapped ) )
               )
             }
           )
           describe( `Bare Member Input`, () =>
             {
               it( `matches a circle`, () =>
-                assert( $.test( [], Shape.ShapeType, cBare ) )
+                assert( $.test( [], Shape.Type, cBare ) )
               )
               it( `matches a rect`, () =>
-                assert( $.test( [], Shape.ShapeType, rBare ) )
+                assert( $.test( [], Shape.Type, rBare ) )
               )
             }
           )
           describe( `Non Member`, () =>
             {
               it( `doesn't match non member`, () =>
-                assert( R.not( $.test( [], Shape.ShapeType, {} ) ) )
+                assert( R.not( $.test( [], Shape.Type, {} ) ) )
               )
             }
           )
         }
       )
-      describe( `#CircleType ( from Type )`, () =>
+      describe( `#Circle.Type ( from Type )`, () =>
         {
           describe( `Wrapped Input`, () =>
             {
               it( `matches a circle`, () =>
-                assert( $.test( [], Shape.CircleType, cWrapped ) )
+                assert( $.test( [], Shape.Circle.Type, cWrapped ) )
               )
               it( `doesn't match a rect`, () =>
-                assert( R.not( $.test( [], Shape.CircleType, rWrapped ) ) )
+                assert( R.not( $.test( [], Shape.Circle.Type, rWrapped ) ) )
               )
             }
           )
           describe( `Bare Member Input`, () =>
             {
               it( `matches a circle`, () =>
-                assert( $.test( [], Shape.CircleType, cBare ) )
+                assert( $.test( [], Shape.Circle.Type, cBare ) )
               )
               it( `doesn't match a rect`, () =>
-                assert( R.not( $.test( [], Shape.CircleType, rBare ) ) )
+                assert( R.not( $.test( [], Shape.Circle.Type, rBare ) ) )
               )
             }
           )
           describe( `Non Member`, () =>
             {
               it( `doesn't match a non member`, () =>
-                assert( R.not( $.test( [], Shape.RectType, {} ) ) )
+                assert( R.not( $.test( [], Shape.Rect.Type, {} ) ) )
               )
             }
           )
         }
       )
-      describe( `#RectType ( from Type )`, () =>
+      describe( `#Rect.Type ( from Type )`, () =>
         {
           describe( `Wrapped Input`, () =>
             {
               it( `matches a rect`, () =>
-                assert( $.test( [], Shape.RectType, rWrapped ) )
+                assert( $.test( [], Shape.Rect.Type, rWrapped ) )
               )
               it( `doesn't match a circle`, () =>
-                assert( R.not( $.test( [], Shape.RectType, cWrapped ) ) )
+                assert( R.not( $.test( [], Shape.Rect.Type, cWrapped ) ) )
               )
             }
           )
           describe( `Bare Member Input`, () =>
             {
               it( `matches a rect`, () =>
-                assert( $.test( [], Shape.RectType, rBare ) )
+                assert( $.test( [], Shape.Rect.Type, rBare ) )
               )
               it( `doesn't match a circle`, () =>
-                assert( R.not( $.test( [], Shape.RectType, cBare ) ) )
+                assert( R.not( $.test( [], Shape.Rect.Type, cBare ) ) )
               )
             }
           )
           describe( `Ambiguous Type`, () =>
             {
               it( `matches a bare square`, () =>
-                assert( $.test( [], Shape.RectType, sBare ) )
+                assert( $.test( [], Shape.Rect.Type, sBare ) )
               )
               it( `matches a wrapped square`, () =>
-                assert( $.test( [], Shape.RectType, sWrapped ) )
+                assert( $.test( [], Shape.Rect.Type, sWrapped ) )
               )
             }
           )
           describe( `Non Member`, () =>
             {
               it( `doesn't match a non member`, () =>
-                assert( R.not( $.test( [], Shape.RectType, {} ) ) )
+                assert( R.not( $.test( [], Shape.Rect.Type, {} ) ) )
               )
             }
           )
         }
       )
-      describe( `#SquareType ( from predicate )`, () =>
+      describe( `#Square.Type ( from predicate )`, () =>
         {
           describe( `Ambiguous Type`, () =>
             {
               it( `doesn't match a wrapped rect`, () =>
-                assert( R.not( $.test( [], Shape.SquareType, rWrapped ) ) )
+                assert( R.not( $.test( [], Shape.Square.Type, rWrapped ) ) )
               )
               it( `doesn't match a bare rect`, () =>
-                assert( R.not( $.test( [], Shape.SquareType, rBare ) ) )
+                assert( R.not( $.test( [], Shape.Square.Type, rBare ) ) )
               )
               it( `matches a wrapped squareUnit5x5`, () =>
-                assert( $.test( [], Shape.SquareType, s5x5Wrapped ) )
+                assert( $.test( [], Shape.Square.Type, s5x5Wrapped ) )
               )
               it( `matches a bare squareUnit5x5`, () =>
-                assert( $.test( [], Shape.SquareType, s5x5Bare ) )
+                assert( $.test( [], Shape.Square.Type, s5x5Bare ) )
               )
             }
           )
         }
       )
-      describe( `#SquareUnit5x5Type ( from unit )`, () =>
+      describe( `#SquareUnit5x5.Type ( from unit )`, () =>
         {
           describe( `Wrapped Input`, () =>
             {
               it( `matches a squareUnit5x5`, () =>
-                assert( $.test( [], Shape.SquareUnit5x5Type, s5x5Wrapped ) )
+                assert( $.test( [], Shape.SquareUnit5x5.Type, s5x5Wrapped ) )
               )
             }
           )
           describe( `Bare Member Input`, () =>
             {
               it( `matches a squareUnit5x5`, () =>
-                assert( $.test( [], Shape.SquareUnit5x5Type, s5x5Bare ) )
+                assert( $.test( [], Shape.SquareUnit5x5.Type, s5x5Bare ) )
               )
             }
           )
           describe( `Ambiguous Type`, () =>
             {
               it( `doesn't match a rect`, () =>
-                assert( R.not( $.test( [], Shape.SquareUnit5x5Type, rWrapped ) ) )
+                assert( R.not( $.test( [], Shape.SquareUnit5x5.Type, rWrapped ) ) )
               )
               it( `doesn't match a square with the wrong dimensions`, () =>
-                assert( R.not( $.test( [], Shape.SquareUnit5x5Type, sBare ) ) )
+                assert( R.not( $.test( [], Shape.SquareUnit5x5.Type, sBare ) ) )
               )
             }
           )
@@ -879,49 +880,49 @@ describe( `Shape`, () => {
           describe( `Wrapped Input`, () =>
             {
               it( `'Circle' matches a circle`, () =>
-                assert( Shape.is( `Circle`, cWrapped ) )
+                assert( Shape.Circle.is(  cWrapped ) )
               )
               it( `'Circle' doesn't match a rect`, () =>
-                assert( R.not( Shape.is( `Circle`, rWrapped ) ) )
+                assert( R.not( Shape.Circle.is(  rWrapped ) ) )
               )
               it( `'Rect' matches a rect`, () =>
-                assert( Shape.is( `Rect`, rWrapped ) )
+                assert( Shape.Rect.is(  rWrapped ) )
               )
             }
           )
           describe( `Bare Member Input`, () =>
             {
               it( `'Circle' matches a circle`, () =>
-                assert( Shape.is( `Circle`, cBare ) )
+                assert( Shape.Circle.is(  cBare ) )
               )
               it( `'Circle' doesn't match a rect`, () =>
-                assert( R.not( Shape.is( `Circle`, rBare ) ) )
+                assert( R.not( Shape.Circle.is(  rBare ) ) )
               )
               it( `'Rect' matches a rect`, () =>
-                assert( Shape.is( `Rect`, rBare ) )
+                assert( Shape.Rect.is(  rBare ) )
               )
             }
           )
           describe( `Ambiguous Type`, () =>
             {
               it( `'Rect' matches a wrapped square`, () =>
-                assert( Shape.is( `Rect`, sWrapped ) )
+                assert( Shape.Rect.is(  sWrapped ) )
               )
               it( `'Rect' matches a bare square`, () =>
-                assert( Shape.is( `Rect`, sBare ) )
+                assert( Shape.Rect.is(  sBare ) )
               )
               it( `'Square' doesn't match a wrapped rect`, () =>
-                assert( R.not( Shape.is( `Square`, rWrapped ) ) )
+                assert( R.not( Shape.Square.is(  rWrapped ) ) )
               )
               it( `'Square' doesn't match a bare rect`, () =>
-                assert( R.not( Shape.is( `Square`, rBare ) ) )
+                assert( R.not( Shape.Square.is(  rBare ) ) )
               )
             }
           )
           describe( `Non Member`, () =>
             {
               it( `'Circle' doesn't match a non member`, () =>
-                assert( R.not( Shape.is( `Circle`, {} ) ) )
+                assert( R.not( Shape.Circle.is(  {} ) ) )
               )
             }
           )
@@ -1093,13 +1094,15 @@ describe( `Shape`, () => {
               )
             }
           )
-          describe( `Non Member`, () =>
-            {
-              it( `equals input for non member`, () =>
-                assert.deepEqual( {}, Shape.value( {} ) )
-              )
-            }
-          )
+          if( opts.checkTypes ) {
+            describe( `Non Member`, () =>
+              {
+                it( `throws a TypeError for non member`, () =>
+                  assert.throws( _ => Shape.value( {} ), TypeError )
+                )
+              }
+            )
+          }
         }
       )
     }
@@ -1111,7 +1114,7 @@ describe( `Shape`, () => {
           describe( `Wrapped Input`, () =>
             {
               it( `equals 24 for rect`, () =>
-                assert.equal( 20, Shape.area( log ( rWrapped ) ) )
+                assert.equal( 20, Shape.area( rWrapped ) )
               )
               it( `equals 78.53981633974483 for circle`, () =>
                 assert.equal( 78.53981633974483, Shape.area( cWrapped ) )
@@ -1465,7 +1468,7 @@ describe( `Instance Methods`, () =>
             assert( s5x5Wrapped.hasTags( ['SquareUnit5x5', 'Square', 'Rect'] ) )
           )
         }
-      )
+      )/*
       describe( `#is()`, () =>
         {
           it( `'Circle' matches a circle`, () =>
@@ -1488,7 +1491,7 @@ describe( `Instance Methods`, () =>
             }
           )
         }
-      )
+      )*/
       describe( `#tags()`, () =>
         {
           it( `equals ['Circle'] for circle`, () =>
